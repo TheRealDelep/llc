@@ -1,0 +1,5 @@
+use std;
+
+main := {
+    "Hello, world!" -> std::print
+};
