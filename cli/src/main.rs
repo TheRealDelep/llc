@@ -15,7 +15,25 @@ use ccg::{
 use llc_parser::parser;
 
 fn main() {
-    let _tokens: () = parser::parser::parse_file("src/test.llc");
+    let args: Vec<String> = env::args().collect();
+
+    let path = match args.get(1) {
+        Some(p) => p,
+        None => "src/test.llc"
+    };
+
+    let res = parser::parser::parse_file(path);
+
+    for n in res.nodes.iter() {
+        println!("{0}", n);
+    }
+
+    if !res.errors.is_empty() {
+        eprintln!("Build failed: Errors happened while compiling the file.")
+    }
+    for r in res.errors.iter() {
+        eprintln!("{0}", r)
+    }
 }
 
 fn _test_ccg() {

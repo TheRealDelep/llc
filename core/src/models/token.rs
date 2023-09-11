@@ -2,18 +2,21 @@ use std::fmt::{format, Display};
 
 use phf::phf_map;
 
-#[derive(Debug)]
-pub struct Token<'a> {
+#[derive(Debug, Default)]
+pub struct Token {
     pub value: TokenValue,
-    pub filename: &'a str,
     pub line_number: usize,
     pub from: usize,
     pub to: usize,
 }
 
-#[derive(Debug)]
+pub trait TokenType {}
+
+#[derive(Debug, Default, PartialEq, Eq)]
 pub enum TokenValue {
-    Undefined,
+    #[default]
+    Null,
+    Undefined(Box<str>),
     Literal(LiteralValue),
     Operator(Operator),
     Identifier(Box<str>),
@@ -27,7 +30,7 @@ pub enum TokenValue {
     EOF,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LiteralValue {
     String(Box<str>),
     Char(char),
@@ -35,7 +38,7 @@ pub enum LiteralValue {
     Float(Box<str>),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Operator {
     Minus,
     Plus,
@@ -53,7 +56,7 @@ pub enum Operator {
     NameSpaceNav,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Keyword {
     Use,
 }
@@ -78,7 +81,8 @@ impl Display for TokenValue {
             f,
             "{}",
             match self {
-                Self::Undefined => String::from("Undefined"),
+                Self::Null => String::from("Null token"),
+                Self::Undefined(t) => format!("Undefined: {t}"),
                 Self::Literal(lit) => format!("Literal value: {lit}"),
                 Self::Operator(op) => format!("Operator: {op}"),
                 Self::Identifier(id) => format!("Identifier: {id}"),

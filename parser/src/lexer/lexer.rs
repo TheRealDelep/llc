@@ -7,7 +7,7 @@ use super::{
 use crate::lexer::file_stream::FileStream;
 use llc_core::models::token::{Token, TokenValue};
 
-pub fn get_tokens(filename: &str) -> Option<TokenStream> {
+pub fn get_tokens<'a>(filename: &'a str) -> Option<TokenStream<'a>> {
     let mut file_stream = get_file_stream(filename);
 
     let mut current_line = match file_stream.get_next() {
@@ -60,15 +60,15 @@ pub fn get_tokens(filename: &str) -> Option<TokenStream> {
             continue;
         }
 
-        current_line.get_next();
-
-        tokens.push(Token {
-            value: TokenValue::Undefined,
-            filename,
-            line_number: current_line.number,
-            from: current_line.current_index,
-            to: current_line.current_index,
-        });
+        if let Some(token) = current_line.get_next() {
+            tokens.push(Token {
+                value: TokenValue::Undefined(token.to_string().into_boxed_str()),
+                filename,
+                line_number: current_line.number,
+                from: current_line.current_index,
+                to: current_line.current_index,
+            });
+        }
     }
 
     Some(TokenStream::new(tokens))
@@ -89,7 +89,7 @@ fn get_file_stream(filename: &str) -> FileStream {
 fn is_comment_line(line: &mut FileLine) -> bool {
     let f = match line.get_next() {
         None => false,
-        Some(c) => *c == '\n',
+        Some(c) => *c == '/',
     };
 
     let s = match line.get_next() {
@@ -97,7 +97,7 @@ fn is_comment_line(line: &mut FileLine) -> bool {
             line.backtrack(1);
             return false;
         }
-        Some(c) => *c == '\n',
+        Some(c) => *c == '/',
     };
 
     if !(f && s) {
@@ -105,7 +105,12 @@ fn is_comment_line(line: &mut FileLine) -> bool {
         return false;
     }
 
-    true
+    loop {
+        match line.get_next() {
+            Some(_) => continue,
+            None => return true 
+        };
+    }
 }
 
 fn eat_white_spaces(line: &mut FileLine) -> bool {

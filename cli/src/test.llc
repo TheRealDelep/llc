@@ -1,5 +1,6 @@
+use std
+use std;
 use std;
 
-main := {
-    "Hello, world!" -> std::print
-};
+//hello := "Hello, world!";
+//hello -> std::print
