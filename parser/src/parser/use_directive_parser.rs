@@ -1,85 +1,78 @@
-use core::panic;
-
 use llc_core::models::{
-    ast_node::Statement,
-    token::{Keyword, Operator, TokenValue},
+    ast_node::{AstNode, AstNodeKind, Statement},
+    token::{Keyword, Operator, Token, TokenValue},
+    use_directive::UseDirective,
 };
 
+use super::{errors::SyntaxError, parser::ParsingResult};
 use crate::lexer::token_stream::TokenStream;
 
-use super::{errors::{CompileError, SyntaxError}, parser::ParsingResult};
-
-pub(crate) fn parse_use_directive<'a>(
-    stream: &'a TokenStream<'a>,
-    index: usize,
-) -> Option<ParsingResult<Statement<'a>>> {
-    let mut new_index = index.clone();
-
-    match stream.get(new_index).value {
-        TokenValue::Keyword(Keyword::Use) => {},
+pub(crate) fn parse_use_directive(stream: &mut TokenStream) -> Option<ParsingResult> {
+    let use_keyword = match stream.get(0) {
+        token @ Token {
+            value: TokenValue::Keyword(Keyword::Use),
+            ..
+        } => token,
         _ => return None,
     };
-    
+
+    let mut offset = 0;
     let mut path: Vec<Box<str>> = vec![];
 
-    'a :loop {
-        new_index += 1;
-        match get_identifier(stream, new_index) {
-            Ok(id) => path.push(id),
-            Err(err) => return Some(ParsingResult::Err(err, new_index)),
-        }
+    'a: loop {
+        offset += 1;
 
-        new_index += 1;
-        match get_separator_or_eoi(stream, new_index) {
-            Ok(t) => match t {
-                TokenValue::EOI => {
-                    return Some(ParsingResult::Ok(
-                        Statement::UseDirective(path),
-                        new_index + 1,
-                    ))
-                }
-                TokenValue::Operator(Operator::NameSpaceNav) => continue 'a,
-                _ => panic!("Expected EOI or Namesapce navigation but found {t}"),
-            },
-            Err(err) => return Some(ParsingResult::Err(err, new_index + 1)),
-        }
-    }
-}
+        match stream.get(offset) {
+            Token {
+                value: TokenValue::Identifier(id),
+                ..
+            } => path.push(id.to_owned()),
+            token @ _ => {
+                let previous = stream.get(offset - 1);
+                let reason = format!(
+                    "Expected identifier after {0} in use directive but found {1}.",
+                    &previous.value, token.value
+                ).into_boxed_str();
 
-fn get_identifier(stream: &TokenStream, index: usize) -> Result<Box<str>, CompileError> {
-    let token = stream.get(index);
-    match &token.value {
-        TokenValue::Identifier(id) => Ok(id.to_owned()),
-        _ => {
-            let previous = stream.get(index - 1);
-            let reason = format!(
-                "Expected identifier after {0} in use directive but found {1}.",
-                &previous.value, token.value
-            );
-            return Err(CompileError::Syntax(SyntaxError::from_token(
-                token,
-                Some(reason.into_boxed_str()),
-            )));
-        } 
-    }
-}
+                let err = SyntaxError::from_token(token, Some(reason));
+                stream.move_index(offset);
+                return Some(ParsingResult::Err(err));
+            }
+        };
 
-fn get_separator_or_eoi<'a>(
-    stream: &'a TokenStream,
-    index: usize,
-) -> Result<&'a TokenValue, CompileError> {
-    let token = stream.get(index + 1);
-    match token.value {
-        TokenValue::EOI | TokenValue::Operator(Operator::NameSpaceNav) => Ok(&token.value),
-        _ => {
-            let reason = format!(
-                "Expected :: or ; after identifier in use directive but found {}.",
-                token.value
-            );
-            return Err(CompileError::Syntax(SyntaxError::from_token(
-                token,
-                Some(reason.into_boxed_str()),
-            )));
-        }
+        offset += 1;
+
+        match stream.get(offset) {
+            Token {
+                value: TokenValue::Operator(Operator::NameSpaceNav),
+                ..
+            } => continue 'a,
+            Token {
+                value: TokenValue::EOI,
+                ..
+            } => {
+                let previous = stream.get(offset - 1);
+                let res = Some(ParsingResult::Ok(AstNode {
+                    ln_start: use_keyword.line_number,
+                    ln_end: previous.line_number,
+                    ch_start: use_keyword.from,
+                    ch_end: previous.to,
+                    kind: AstNodeKind::Statement(Statement::UseDirective(UseDirective { path })),
+                }));
+                stream.move_index(offset + 1);
+                return res
+            }
+            token @ _ => {
+                let reason = format!(
+                    "Expected :: or ; after identifier in use directive but found {}.",
+                    token.value
+                );
+
+                return Some(ParsingResult::Err(SyntaxError::from_token(
+                    token,
+                    Some(reason.into_boxed_str()),
+                )));
+            }
+        };
     }
 }

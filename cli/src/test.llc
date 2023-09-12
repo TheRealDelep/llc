@@ -1,6 +1,5 @@
-use std
-use std;
-use std;
-
-//hello := "Hello, world!";
-//hello -> std::print
+use;
+use std::
+use std::io;
+use std::prout;
+use std::bite;

@@ -1,47 +1,44 @@
-use llc_core::models::{
-    ast_node::{AstNode, Statement, SyntaxNode},
-    token::TokenValue,
-};
+use llc_core::models::{ast_node::AstNode, token::{TokenValue, Token}};
 
-use super::{errors::CompileError, use_directive_parser::parse_use_directive};
+use super::{errors::{SyntaxError}, use_directive_parser::parse_use_directive};
 use crate::lexer::{lexer, token_stream::TokenStream};
 
-pub struct ParserResult<'a> {
-    pub nodes: Vec<Statement<'a>>,
-    pub errors: Vec<CompileError>,
-    pub tokens: TokenStream<'a>
+pub struct ParserResult {
+    pub nodes: Vec<AstNode>,
+    pub errors: Vec<SyntaxError>,
+    pub tokens: TokenStream,
 }
 
-pub fn parse_file<'a>(filename: &'a str) -> ParserResult<'a> {
-    let tokens = get_tokens(filename);
+pub fn parse_file<'a>(filename: &'a str) -> ParserResult {
+    let mut tokens = get_tokens(filename);
 
-    let mut index = 0;
-
-    let mut nodes = vec![];
+    let mut nodes: Vec<AstNode> = vec![];
     let mut errors = vec![];
 
     'a: loop {
-        if !tokens.can_read(&index) {
+        if !tokens.can_read(0) {
             break 'a;
         }
 
-        if let Some(res) = parse_use_directive(&tokens, index) {
-            index = handle_result(res, &mut nodes, &mut errors);
+        if let Some(res) = parse_use_directive(&mut tokens) {
+            match res {
+                ParsingResult::Ok(node) => nodes.push(node),
+                ParsingResult::Err(err) => {
+                    errors.push(err);
+                    eat_until_eoi(&mut tokens);
+                },
+            }
             continue;
         }
 
-        'b: loop {
-            match tokens.get(index).value {
-                TokenValue::EOI => {
-                    index += 1;
-                    break 'b;
-                }
-                _ => index += 1,
-            };
-        }
+        eat_until_eoi(&mut tokens);
     }
 
-    ParserResult { nodes, errors, tokens }
+    ParserResult {
+        nodes,
+        errors,
+        tokens,
+    }
 }
 
 pub fn get_tokens(filename: &str) -> TokenStream {
@@ -51,24 +48,22 @@ pub fn get_tokens(filename: &str) -> TokenStream {
     }
 }
 
-fn handle_result<'a>(
-    res: ParsingResult<Statement<'a>>,
-    nodes: &mut Vec<Statement<'a>>,
-    errors: &mut Vec<CompileError>,
-) -> usize {
-    match res {
-        ParsingResult::Ok(node, index) => {
-            nodes.push(node);
-            index
-        }
-        ParsingResult::Err(err, index) => {
-            errors.push(err);
-            index
+fn eat_until_eoi(tokens: &mut TokenStream) {
+    let mut offset = 0;
+    loop {
+        match tokens.get(offset) {
+            Token {value: TokenValue::EOI | TokenValue::EOF, ..} => {
+                offset+=1;
+            },
+            _ => {
+                break;
+            }
         }
     }
+    tokens.move_index(offset);
 }
 
-pub enum ParsingResult<T: AstNode> {
-    Ok(T, usize),
-    Err(CompileError, usize),
+pub enum ParsingResult {
+    Ok(AstNode),
+    Err(SyntaxError),
 }

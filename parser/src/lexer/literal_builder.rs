@@ -2,7 +2,7 @@ use llc_core::models::token::{self, Token, TokenValue};
 
 use super::file_stream::FileLine;
 
-pub fn build_literal<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token<'a>> {
+pub fn build_literal<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
     if let Some(token) = build_literal_str(line, filename) {
         return Some(token);
     }
@@ -18,7 +18,7 @@ pub fn build_literal<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
     None
 }
 
-fn build_literal_str<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token<'a>> {
+fn build_literal_str<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
     let mut lit = String::new();
     let from = line.current_index + 1;
 
@@ -40,7 +40,6 @@ fn build_literal_str<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
         return match lit.is_empty() {
             true => None,
             false => Some(Token {
-                filename,
                 line_number: line.number + 1,
                 from,
                 to: from + lit.len() - 1,
@@ -50,7 +49,7 @@ fn build_literal_str<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
     }
 }
 
-fn build_literal_num<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token<'a>> {
+fn build_literal_num<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
     let mut lit = String::new();
     let from = line.current_index + 1;
     loop {
@@ -68,7 +67,6 @@ fn build_literal_num<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
             false => Some(Token {
                 from,
                 to: from + lit.len() - 1,
-                filename,
                 line_number: line.number + 1,
                 value: TokenValue::Literal(token::LiteralValue::Integer(lit.into_boxed_str())),
             }),
@@ -76,7 +74,7 @@ fn build_literal_num<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
     }
 }
 
-fn build_identifier<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token<'a>> {
+fn build_identifier<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
     let mut identifier = String::new();
     let from = line.current_index + 1;
     loop {
@@ -98,7 +96,6 @@ fn build_identifier<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token<
                     Some(k) => TokenValue::Keyword(k),
                     None => TokenValue::Identifier(identifier.into_boxed_str()),
                 },
-                filename,
                 line_number: line.number + 1,
             }),
         };

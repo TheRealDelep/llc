@@ -61,7 +61,7 @@ pub enum Keyword {
     Use,
 }
 
-impl<'a> Display for Token<'a> {
+impl<'a> Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let col = match self.from == self.to {
             true => self.from.to_string(),

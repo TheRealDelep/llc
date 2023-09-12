@@ -2,13 +2,12 @@ use llc_core::models::token::{self, Operator, Token, TokenValue};
 
 use super::file_stream::FileLine;
 
-pub fn build_operator<'a>(line: &mut FileLine, filename: &'a str) -> Option<Vec<Token<'a>>> {
+pub fn build_operator<'a>(line: &mut FileLine, filename: &'a str) -> Option<Vec<Token>> {
     let mut result = Vec::new();
 
     match get_operator(line) {
         OperatorBuilderResult::None => return None,
         OperatorBuilderResult::One(op) => result.push(Token {
-            filename,
             line_number: line.number + 1,
             from: match op.is_composite(){
                 true => line.current_index - 1,
@@ -19,14 +18,12 @@ pub fn build_operator<'a>(line: &mut FileLine, filename: &'a str) -> Option<Vec<
         }),
         OperatorBuilderResult::Two(op1, op2) => {
             result.push(Token {
-                filename,
                 line_number: line.number + 1,
                 from: line.current_index,
                 to: line.current_index,
                 value: TokenValue::Operator(op1),
             });
             result.push(Token {
-                filename,
                 line_number: line.number + 1,
                 from: line.current_index + 1,
                 to: line.current_index + 1,

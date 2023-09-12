@@ -1,52 +1,71 @@
 use std::fmt::Display;
 
-use super::token::{Token, LiteralValue};
+use super::{token::Token, use_directive::UseDirective};
 
-pub trait AstNode {}
-
-pub enum SyntaxNode<'a> {
-    Statement(Statement<'a>),
-    Expression(Expression<'a>),
+pub struct AstNode {
+    pub ln_start: usize,
+    pub ln_end: usize,
+    pub ch_start: usize,
+    pub ch_end: usize,
+    pub kind: AstNodeKind
 }
 
-pub enum Statement<'a> {
-    UseDirective(Vec<Box<str>>),
-    Assignement(Box<str>, Expression<'a>),
-    DeclAssignment(Box<str>, Expression<'a>),
+pub enum AstNodeKind {
+    Statement(Statement),
+    Expression(Expression),
 }
 
-pub enum Expression<'a> {
-    Literal(),
+pub enum Statement {
+    UseDirective(UseDirective),
 }
 
-pub struct UseDirectiveNode {
-    pub tokens: Vec<Token>,
+pub enum Expression {
+    Literal(Literal),
 }
 
-pub struct AssignementNode {
+pub struct Assignement {
     pub tokens: Vec<Token>
 }
 
-impl<'a> AstNode for SyntaxNode<'a> {}
-impl<'a> AstNode for Statement<'a> {}
-impl<'a> AstNode for Expression<'a> {}
+pub struct DeclAssignment {
 
-impl<'a> Display for Statement<'a> {
+}
+
+pub struct Literal {
+
+}
+
+impl Display for Statement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Self::UseDirective(ids) =>
-                    format!("Use directive. Module path: {0}", ids.join("::")),
+                Self::UseDirective(dir) =>
+                    format!("Use directive. Module path: {0}", dir.path.join("::")),
                 _ => todo!("Not Implemented"),
             }
         )
     }
 }
 
-impl<'a> Display for Expression<'a> {
+impl Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
+    }
+}
+
+impl Display for AstNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
+impl Display for AstNodeKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self{
+            Self::Expression(exp) => format!("{}", exp),
+            Self::Statement(stmt) => format!("{}", stmt)
+        })
     }
 }

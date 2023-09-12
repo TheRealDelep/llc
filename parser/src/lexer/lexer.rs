@@ -7,7 +7,7 @@ use super::{
 use crate::lexer::file_stream::FileStream;
 use llc_core::models::token::{Token, TokenValue};
 
-pub fn get_tokens<'a>(filename: &'a str) -> Option<TokenStream<'a>> {
+pub fn get_tokens(filename: &str) -> Option<TokenStream> {
     let mut file_stream = get_file_stream(filename);
 
     let mut current_line = match file_stream.get_next() {
@@ -25,7 +25,6 @@ pub fn get_tokens<'a>(filename: &'a str) -> Option<TokenStream<'a>> {
             current_line = match file_stream.get_next() {
                 None => {
                     tokens.push(Token {
-                        filename,
                         value: TokenValue::EOF,
                         line_number,
                         from: char_number,
@@ -63,7 +62,6 @@ pub fn get_tokens<'a>(filename: &'a str) -> Option<TokenStream<'a>> {
         if let Some(token) = current_line.get_next() {
             tokens.push(Token {
                 value: TokenValue::Undefined(token.to_string().into_boxed_str()),
-                filename,
                 line_number: current_line.number,
                 from: current_line.current_index,
                 to: current_line.current_index,
@@ -129,7 +127,7 @@ fn eat_white_spaces(line: &mut FileLine) -> bool {
     }
 }
 
-fn build_single_char_token<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token<'a>> {
+fn build_single_char_token<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
     if let Some(c) = line.get_next() {
         let value = match c {
             '{' => TokenValue::OpenCurly,
@@ -146,7 +144,6 @@ fn build_single_char_token<'a>(line: &mut FileLine, filename: &'a str) -> Option
 
         return Some(Token {
             value,
-            filename,
             line_number: line.number +1,
             from: line.current_index,
             to: line.current_index,
