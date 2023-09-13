@@ -12,7 +12,8 @@ use ccg::{
     },
     file::c_file::CFile,
 };
-use llc_parser::parser;
+
+use llc_core::parser;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

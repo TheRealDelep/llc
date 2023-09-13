@@ -1,11 +1,13 @@
-use llc_core::models::{
+use super::{
     ast_node::{AstNode, AstNodeKind, Statement},
-    token::{Keyword, Operator, Token, TokenValue},
+    errors::SyntaxError,
+    parser::ParsingResult,
     use_directive::UseDirective,
 };
-
-use super::{errors::SyntaxError, parser::ParsingResult};
-use crate::lexer::token_stream::TokenStream;
+use crate::lexer::{
+    token::{Keyword, Operator, Token, TokenValue},
+    token_stream::TokenStream,
+};
 
 pub(crate) fn parse_use_directive(stream: &mut TokenStream) -> Option<ParsingResult> {
     let use_keyword = match stream.get(0) {
@@ -32,7 +34,8 @@ pub(crate) fn parse_use_directive(stream: &mut TokenStream) -> Option<ParsingRes
                 let reason = format!(
                     "Expected identifier after {0} in use directive but found {1}.",
                     &previous.value, token.value
-                ).into_boxed_str();
+                )
+                .into_boxed_str();
 
                 let err = SyntaxError::from_token(token, Some(reason));
                 stream.move_index(offset);
@@ -60,7 +63,7 @@ pub(crate) fn parse_use_directive(stream: &mut TokenStream) -> Option<ParsingRes
                     kind: AstNodeKind::Statement(Statement::UseDirective(UseDirective { path })),
                 }));
                 stream.move_index(offset + 1);
-                return res
+                return res;
             }
             token @ _ => {
                 let reason = format!(

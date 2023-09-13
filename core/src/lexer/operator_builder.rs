@@ -1,6 +1,4 @@
-use llc_core::models::token::{self, Operator, Token, TokenValue};
-
-use super::file_stream::FileLine;
+use super::{file_stream::FileLine, token::{Token, TokenValue, Operator, self}};
 
 pub fn build_operator<'a>(line: &mut FileLine, filename: &'a str) -> Option<Vec<Token>> {
     let mut result = Vec::new();

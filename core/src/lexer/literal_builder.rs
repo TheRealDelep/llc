@@ -1,6 +1,5 @@
-use llc_core::models::token::{self, Token, TokenValue};
 
-use super::file_stream::FileLine;
+use super::{file_stream::FileLine, token::{Token, TokenValue, self}};
 
 pub fn build_literal<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
     if let Some(token) = build_literal_str(line, filename) {

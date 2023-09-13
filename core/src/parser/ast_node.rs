@@ -1,13 +1,13 @@
+use super::use_directive::UseDirective;
+use crate::lexer::token::Token;
 use std::fmt::Display;
-
-use super::{token::Token, use_directive::UseDirective};
 
 pub struct AstNode {
     pub ln_start: usize,
     pub ln_end: usize,
     pub ch_start: usize,
     pub ch_end: usize,
-    pub kind: AstNodeKind
+    pub kind: AstNodeKind,
 }
 
 pub enum AstNodeKind {
@@ -24,16 +24,12 @@ pub enum Expression {
 }
 
 pub struct Assignement {
-    pub tokens: Vec<Token>
+    pub tokens: Vec<Token>,
 }
 
-pub struct DeclAssignment {
+pub struct DeclAssignment {}
 
-}
-
-pub struct Literal {
-
-}
+pub struct Literal {}
 
 impl Display for Statement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -63,9 +59,13 @@ impl Display for AstNode {
 
 impl Display for AstNodeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self{
-            Self::Expression(exp) => format!("{}", exp),
-            Self::Statement(stmt) => format!("{}", stmt)
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Expression(exp) => format!("{}", exp),
+                Self::Statement(stmt) => format!("{}", stmt),
+            }
+        )
     }
 }

@@ -1,7 +1,6 @@
-use llc_core::models::{ast_node::AstNode, token::{TokenValue, Token}};
 
-use super::{errors::{SyntaxError}, use_directive_parser::parse_use_directive};
-use crate::lexer::{lexer, token_stream::TokenStream};
+use super::{errors::{SyntaxError}, use_directive_parser::parse_use_directive, ast_node::AstNode};
+use crate::lexer::{lexer, token_stream::TokenStream, token::{Token, TokenValue}};
 
 pub struct ParserResult {
     pub nodes: Vec<AstNode>,

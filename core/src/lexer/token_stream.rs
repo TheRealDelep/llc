@@ -1,4 +1,5 @@
-use llc_core::models::token::{Token, TokenValue};
+use super::token::{Token, TokenValue};
+
 
 pub struct TokenStream {
     pub tokens: Vec<Token>,

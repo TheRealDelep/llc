@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 ccg = { version = "0.1.0", path = "../ccg" }
-llc_parser = { version = "0.1.0", path = "../parser" }
+llc_core = { version = "0.1.0", path = "../core" }

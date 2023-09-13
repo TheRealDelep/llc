@@ -2,10 +2,9 @@ use std::{fs, vec};
 
 use super::{
     file_stream::FileLine, literal_builder::build_literal, operator_builder::build_operator,
-    token_stream::TokenStream,
+    token_stream::TokenStream, token::{Token, TokenValue},
 };
 use crate::lexer::file_stream::FileStream;
-use llc_core::models::token::{Token, TokenValue};
 
 pub fn get_tokens(filename: &str) -> Option<TokenStream> {
     let mut file_stream = get_file_stream(filename);
@@ -24,7 +23,7 @@ pub fn get_tokens(filename: &str) -> Option<TokenStream> {
 
             current_line = match file_stream.get_next() {
                 None => {
-                    tokens.push(Token {
+                        tokens.push(Token {
                         value: TokenValue::EOF,
                         line_number,
                         from: char_number,
