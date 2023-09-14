@@ -12,8 +12,7 @@ use ccg::{
     },
     file::c_file::CFile,
 };
-
-use llc_core::parser;
+use llc_core::parser::{ast_node::AstNodeData, self};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,14 +22,14 @@ fn main() {
         None => "src/test.llc"
     };
 
-    let res = parser::parser::parse_file(path);
+    let res = llc_core::parser::parser::parse_file(path);
 
     for n in res.nodes.iter() {
-        println!("{0}", n);
+        println!("{0}", n.print(&res));
     }
 
     if !res.errors.is_empty() {
-        eprintln!("Build failed: Errors happened while compiling the file.")
+        eprintln!("Build failed: Errors happened while compiling the file {}.", res.file_name)
     }
     for r in res.errors.iter() {
         eprintln!("{0}", r)
