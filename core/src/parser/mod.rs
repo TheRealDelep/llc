@@ -1,3 +1,4 @@
+pub mod function;
 pub mod literal;
 pub mod statement;
 pub mod expression;

@@ -1,6 +1,8 @@
+use std::fmt::Display;
+
+use super::ast_node::{AstNode, AstNodeData};
 use super::ast_node::{Parsable, ParsingResult};
 use super::errors::SyntaxError;
-use super::ast_node::AstNode;
 use crate::lexer::token::{Token, TokenValue};
 use crate::lexer::{lexer, token_stream::TokenStream};
 
@@ -11,42 +13,61 @@ pub struct FileAst {
     root_nodes: Vec<usize>,
 }
 
-pub fn parse_file<'a>(file_name: &'a str) -> FileAst {
-    let mut stream = get_tokens(file_name);
-    let mut result = FileAst {
-        file_name: Box::from(file_name),
-        nodes: vec![],
-        errors: vec![],
-        root_nodes: vec![],
-    };
+impl FileAst {
+    pub fn parse_file<'a>(file_name: &'a str) -> Self {
+        let mut stream = get_tokens(file_name);
+        let mut result = FileAst {
+            file_name: Box::from(file_name),
+            nodes: vec![],
+            errors: vec![],
+            root_nodes: vec![],
+        };
 
-    let mut buffer = ParserBuffer::new();
+        let mut buffer = ParserBuffer::new();
 
-    'parse: loop {
-        if !stream.can_read() {
-            break 'parse;
-        }
-
-        match AstNode::parse(&mut stream, &mut buffer) {
-            ParsingResult::Ok(id) => {
-                result.nodes.append(&mut buffer.get_raw_nodes());
-                result.root_nodes.push(id);
-            },
-            ParsingResult::Error => {
-                result.errors.append(buffer.get_raw_errors());
-            },
-            ParsingResult::Other => {
-                stream.skip_until(|t| match t {
-                    Token {value: TokenValue::EOI | TokenValue::EOF, ..} => true, 
-                    _ => false
-                }, true);
+        'parse: loop {
+            if !stream.can_read() {
+                break 'parse;
             }
+
+            match AstNode::parse(&mut stream, &mut buffer) {
+                ParsingResult::Ok(id) => {
+                    result.nodes.append(&mut buffer.get_raw_nodes());
+                    result.root_nodes.push(id);
+                }
+                ParsingResult::Error => {
+                    result.errors.append(buffer.get_raw_errors());
+                }
+                ParsingResult::Other => {
+                    stream.skip_until(
+                        |t| match t {
+                            Token {
+                                value: TokenValue::EOI | TokenValue::EOF,
+                                ..
+                            } => true,
+                            _ => false,
+                        },
+                        true,
+                    );
+                }
+            }
+
+            buffer.reset(Some(result.nodes.len()));
         }
 
-        buffer.reset(Some(result.nodes.len()));
+        result
     }
+}
 
-    result
+impl Display for FileAst {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: Vec<String> =  self.root_nodes
+            .iter()
+            .map(|i| self.nodes.get(*i).unwrap().print(self))
+            .collect();
+
+        write!(f, "{}", s.join("\n"))
+    }
 }
 
 pub fn get_tokens(filename: &str) -> TokenStream {

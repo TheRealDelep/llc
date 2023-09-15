@@ -1,4 +1,4 @@
-use crate::lexer::token_stream::TokenStream;
+use crate::lexer::{token_stream::TokenStream, token::TokenValue};
 
 use super::{declaration::Declaration, ast_node::{Parsable, AstNodeData, ParsingResult, AstNodePos}, parser::{ParserBuffer, FileAst}};
 
@@ -8,7 +8,14 @@ pub enum Statement {
 
 impl Parsable for Statement {
     fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
-        Declaration::parse(stream, buffer)
+        match Declaration::parse(stream, buffer) {
+            ParsingResult::Ok(id) => {
+                stream.skip_if(|t| t.value == TokenValue::EOI);
+                return ParsingResult::Ok(id)
+            },
+            ParsingResult::Error => return ParsingResult::Error,
+            ParsingResult::Other => return ParsingResult::Other
+        }
     }
 }
 
