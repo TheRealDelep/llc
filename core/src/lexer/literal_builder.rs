@@ -1,6 +1,9 @@
-use crate::common::{literal::LiteralValue, keyword};
+use crate::common::{keyword, literal::LiteralValue};
 
-use super::{file_stream::FileLine, token::{Token, TokenValue}};
+use super::{
+    file_stream::FileLine,
+    token::{Token, TokenValue},
+};
 
 pub fn build_literal<'a>(line: &mut FileLine) -> Option<Token> {
     if let Some(token) = build_literal_str(line) {

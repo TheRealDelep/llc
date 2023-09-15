@@ -1,8 +1,5 @@
 use crate::{
-    lexer::{
-        token::TokenValue,
-        token_stream::TokenStream,
-    },
+    lexer::{token::TokenValue, token_stream::TokenStream},
     type_system::llc_type::Type,
 };
 
@@ -10,7 +7,7 @@ use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
     errors::SyntaxError,
     expression::Expression,
-    parser::{ParserBuffer, FileAst},
+    parser::{FileAst, ParserBuffer},
     statement::Statement,
 };
 
@@ -74,12 +71,13 @@ impl Parsable for Function {
 
 impl AstNodeData for Function {
     fn print(&self, file_ast: &FileAst) -> String {
-        let statements: Vec<String> = self.body
+        let statements: Vec<String> = self
+            .body
             .iter()
             .map(|i| file_ast.nodes.get(*i).unwrap().print(file_ast))
             .collect();
 
-        format!("Function body \n\t {}", statements.join("\n\t")) 
+        format!("Function body \n\t {}", statements.join("\n\t"))
     }
 
     fn get_pos(&self) -> &AstNodePos {

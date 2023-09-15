@@ -1,8 +1,11 @@
 use std::{fs, vec};
 
 use super::{
-    file_stream::FileLine, literal_builder::build_literal, operator_builder::build_operator,
-    token_stream::TokenStream, token::{Token, TokenValue},
+    file_stream::FileLine,
+    literal_builder::build_literal,
+    operator_builder::build_operator,
+    token::{Token, TokenValue},
+    token_stream::TokenStream,
 };
 use crate::lexer::file_stream::FileStream;
 
@@ -23,7 +26,7 @@ pub fn get_tokens(filename: &str) -> Option<TokenStream> {
 
             current_line = match file_stream.get_next() {
                 None => {
-                        tokens.push(Token {
+                    tokens.push(Token {
                         value: TokenValue::EOF,
                         line_number,
                         from: char_number,
@@ -105,7 +108,7 @@ fn is_comment_line(line: &mut FileLine) -> bool {
     loop {
         match line.get_next() {
             Some(_) => continue,
-            None => return true 
+            None => return true,
         };
     }
 }
@@ -143,7 +146,7 @@ fn build_single_char_token<'a>(line: &mut FileLine) -> Option<Token> {
 
         return Some(Token {
             value,
-            line_number: line.number +1,
+            line_number: line.number + 1,
             from: line.current_index,
             to: line.current_index,
         });

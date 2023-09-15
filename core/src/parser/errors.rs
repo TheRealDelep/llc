@@ -20,17 +20,17 @@ impl<'a> Display for SyntaxError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let msg = if self.ln_start == self.ln_end {
             format!(
-                    "At line {0}, chars {1}:{2}. {3}",
-                    self.ln_start, self.ch_start, self.ch_end, self.reason
-                )
+                "At line {0}, chars {1}:{2}. {3}",
+                self.ln_start, self.ch_start, self.ch_end, self.reason
+            )
         } else {
             format!(
-                    "From (line {0}, char {1}) to (line {2}, char {3}). {4}",
-                    self.ln_start, self.ch_start, self.ln_end, self.ch_end, self.reason
-                )
+                "From (line {0}, char {1}) to (line {2}, char {3}). {4}",
+                self.ln_start, self.ch_start, self.ln_end, self.ch_end, self.reason
+            )
         };
 
-        write!(f, "{}", msg) 
+        write!(f, "{}", msg)
     }
 }
 

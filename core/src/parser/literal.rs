@@ -9,7 +9,7 @@ use crate::{
 use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
     expression::Expression,
-    parser::{ParserBuffer, FileAst},
+    parser::{FileAst, ParserBuffer},
 };
 
 pub struct Literal {

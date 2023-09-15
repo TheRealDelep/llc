@@ -1,14 +1,12 @@
-use crate::lexer::{
-    token::TokenValue,
-    token_stream::TokenStream,
-};
+use crate::lexer::{token::TokenValue, token_stream::TokenStream};
 
 use super::{
     ast_node::{AstNodeData, AstNodePos, Parsable, ParsingResult},
     errors::SyntaxError,
+    function::Function,
     indentifier::Identifier,
     literal::Literal,
-    parser::{FileAst, ParserBuffer}, function::Function,
+    parser::{FileAst, ParserBuffer},
 };
 
 pub enum Expression {
@@ -63,7 +61,7 @@ impl AstNodeData for Expression {
         match self {
             Self::Identifier(id) => id.print(file_ast),
             Self::Literal(lit) => lit.print(file_ast),
-            Self::Function(func) => func.print(file_ast)
+            Self::Function(func) => func.print(file_ast),
         }
     }
 
@@ -71,7 +69,7 @@ impl AstNodeData for Expression {
         match self {
             Self::Identifier(id) => id.get_pos(),
             Self::Literal(lit) => lit.get_pos(),
-            Self::Function(func) => func.get_pos()
+            Self::Function(func) => func.get_pos(),
         }
     }
 }

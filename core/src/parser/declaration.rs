@@ -1,27 +1,28 @@
-use crate::{lexer::{
-    token::{Token, TokenValue},
-    token_stream::TokenStream,
-}, common::operator::Operator};
+use crate::{
+    common::operator::Operator,
+    lexer::{
+        token::{Token, TokenValue},
+        token_stream::TokenStream,
+    },
+};
 
 use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
+    errors::SyntaxError,
     expression::Expression,
     indentifier::Identifier,
-    parser::{ParserBuffer, FileAst},
-    statement::Statement, errors::SyntaxError,
+    parser::{FileAst, ParserBuffer},
+    statement::Statement,
 };
 
 pub struct Declaration {
     identifier_id: usize,
     expression_id: usize,
-    pos: AstNodePos
+    pos: AstNodePos,
 }
 
 impl Parsable for Declaration {
     fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
-        // if indentifier then := => parse right side expression
-        // else return none
-
         let id_id = match Identifier::parse(stream, buffer) {
             ParsingResult::Ok(i) => i,
             _ => return ParsingResult::Other,
@@ -43,10 +44,16 @@ impl Parsable for Declaration {
             ParsingResult::Other => {
                 let token = stream.take();
                 let tmp = (token.line_number, token.from);
-                stream.skip_until(|t| match t {
-                    Token {value: TokenValue::EOI | TokenValue::EOF, ..} => true,
-                    _ => false
-                }, false);
+                stream.skip_until(
+                    |t| match t {
+                        Token {
+                            value: TokenValue::EOI | TokenValue::EOF,
+                            ..
+                        } => true,
+                        _ => false,
+                    },
+                    false,
+                );
                 let eoi = stream.take();
 
                 let err = SyntaxError {
@@ -54,11 +61,11 @@ impl Parsable for Declaration {
                     ln_end: eoi.line_number,
                     ch_start: tmp.1,
                     ch_end: eoi.to,
-                    reason: Box::from("Expected a value after operator :=")
+                    reason: Box::from("Expected a value after operator :="),
                 };
-                
+
                 buffer.errors.push(err);
-                return ParsingResult::Error
+                return ParsingResult::Error;
             }
         };
 
@@ -69,7 +76,7 @@ impl Parsable for Declaration {
             Declaration {
                 identifier_id: id_id,
                 expression_id: exp_id,
-                pos: AstNodePos::from_nodes(id, exp)
+                pos: AstNodePos::from_nodes(id, exp),
             },
         ))));
     }

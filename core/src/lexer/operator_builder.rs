@@ -1,6 +1,9 @@
-use crate::common::operator::{Operator, self};
+use crate::common::operator::{self, Operator};
 
-use super::{file_stream::FileLine, token::{Token, TokenValue}};
+use super::{
+    file_stream::FileLine,
+    token::{Token, TokenValue},
+};
 
 pub fn build_operator<'a>(line: &mut FileLine) -> Option<Vec<Token>> {
     let mut result = Vec::new();
@@ -9,7 +12,7 @@ pub fn build_operator<'a>(line: &mut FileLine) -> Option<Vec<Token>> {
         OperatorBuilderResult::None => return None,
         OperatorBuilderResult::One(op) => result.push(Token {
             line_number: line.number + 1,
-            from: match op.is_composite(){
+            from: match op.is_composite() {
                 true => line.current_index - 1,
                 false => line.current_index,
             },

@@ -4,8 +4,9 @@ use crate::lexer::{
 };
 
 use super::{
-    ast_node::{AstNode, AstNodePos, ParsingResult, AstNodeData, Parsable},
-    parser::{ParserBuffer, FileAst}, expression::Expression,
+    ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
+    expression::Expression,
+    parser::{FileAst, ParserBuffer},
 };
 
 pub struct Identifier {

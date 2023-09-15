@@ -1,20 +1,24 @@
-use crate::lexer::{token_stream::TokenStream, token::Token};
+use crate::lexer::{token::Token, token_stream::TokenStream};
 
-use super::{expression::Expression, parser::{ParserBuffer, FileAst}, statement::Statement};
+use super::{
+    expression::Expression,
+    parser::{FileAst, ParserBuffer},
+    statement::Statement,
+};
 
 pub trait AstNodeData {
     fn print(&self, file_ast: &FileAst) -> String;
     fn get_pos(&self) -> &AstNodePos;
 }
 
-pub(crate) trait Parsable : AstNodeData {
+pub(crate) trait Parsable: AstNodeData {
     fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult;
 }
 
 pub enum ParsingResult {
     Ok(usize),
     Error,
-    Other
+    Other,
 }
 
 pub struct AstNodePos {
@@ -39,20 +43,20 @@ impl AstNodeData for AstNode {
     fn print(&self, file_ast: &FileAst) -> String {
         match self {
             Self::Expression(exp) => exp.print(file_ast),
-            Self::Statement(stmt) => stmt.print(file_ast)
+            Self::Statement(stmt) => stmt.print(file_ast),
         }
     }
 
     fn get_pos(&self) -> &AstNodePos {
         match self {
             Self::Expression(exp) => exp.get_pos(),
-            Self::Statement(stmt) => stmt.get_pos()
+            Self::Statement(stmt) => stmt.get_pos(),
         }
     }
 }
 
 impl AstNodePos {
-    pub(crate) fn from_nodes(first: &AstNode, last: &AstNode) -> Self{
+    pub(crate) fn from_nodes(first: &AstNode, last: &AstNode) -> Self {
         let first_pos = first.get_pos();
         let last_pos = last.get_pos();
 
@@ -60,7 +64,7 @@ impl AstNodePos {
             ln_start: first_pos.ln_start,
             ln_end: last_pos.ln_end,
             ch_start: first_pos.ch_start,
-            ch_end: last_pos.ch_end
+            ch_end: last_pos.ch_end,
         }
     }
 
@@ -69,7 +73,7 @@ impl AstNodePos {
             ln_start: token.line_number,
             ln_end: token.line_number,
             ch_start: token.from,
-            ch_end: token.to
+            ch_end: token.to,
         }
     }
 }

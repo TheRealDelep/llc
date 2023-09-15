@@ -1,9 +1,13 @@
-use crate::lexer::{token_stream::TokenStream, token::TokenValue};
+use crate::lexer::{token::TokenValue, token_stream::TokenStream};
 
-use super::{declaration::Declaration, ast_node::{Parsable, AstNodeData, ParsingResult, AstNodePos}, parser::{ParserBuffer, FileAst}};
+use super::{
+    ast_node::{AstNodeData, AstNodePos, Parsable, ParsingResult},
+    declaration::Declaration,
+    parser::{FileAst, ParserBuffer},
+};
 
 pub enum Statement {
-    Declaration(Declaration)
+    Declaration(Declaration),
 }
 
 impl Parsable for Statement {
@@ -11,10 +15,10 @@ impl Parsable for Statement {
         match Declaration::parse(stream, buffer) {
             ParsingResult::Ok(id) => {
                 stream.skip_if(|t| t.value == TokenValue::EOI);
-                return ParsingResult::Ok(id)
-            },
+                return ParsingResult::Ok(id);
+            }
             ParsingResult::Error => return ParsingResult::Error,
-            ParsingResult::Other => return ParsingResult::Other
+            ParsingResult::Other => return ParsingResult::Other,
         }
     }
 }
@@ -22,13 +26,13 @@ impl Parsable for Statement {
 impl AstNodeData for Statement {
     fn print(&self, file_ast: &FileAst) -> String {
         match self {
-            Self::Declaration(decl) => decl.print(file_ast)
+            Self::Declaration(decl) => decl.print(file_ast),
         }
     }
 
     fn get_pos(&self) -> &AstNodePos {
         match self {
-            Self::Declaration(decl) => decl.get_pos()
+            Self::Declaration(decl) => decl.get_pos(),
         }
     }
 }

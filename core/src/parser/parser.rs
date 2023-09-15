@@ -61,7 +61,8 @@ impl FileAst {
 
 impl Display for FileAst {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s: Vec<String> =  self.root_nodes
+        let s: Vec<String> = self
+            .root_nodes
             .iter()
             .map(|i| self.nodes.get(*i).unwrap().print(self))
             .collect();

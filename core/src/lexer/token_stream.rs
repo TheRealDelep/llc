@@ -1,16 +1,15 @@
 use super::token::{Token, TokenValue};
 
-
 pub struct TokenStream {
     pub tokens: Vec<Token>,
-    current_index: usize
+    current_index: usize,
 }
 
 impl TokenStream {
     pub fn new(tokens: Vec<Token>) -> Self {
         TokenStream {
             tokens,
-            current_index: 0
+            current_index: 0,
         }
     }
 
@@ -26,9 +25,9 @@ impl TokenStream {
                 let eof = match self.tokens.last() {
                     Some(token) => match token.value {
                         TokenValue::EOF => token,
-                        _ => panic!("Last token should be EOF")
+                        _ => panic!("Last token should be EOF"),
                     },
-                    None => panic!("Token stream is empty")
+                    None => panic!("Token stream is empty"),
                 };
 
                 eof
@@ -37,9 +36,9 @@ impl TokenStream {
     }
 
     // take: consumes token anyway
-    pub fn take(&mut self) -> &Token{
+    pub fn take(&mut self) -> &Token {
         self.current_index += 1;
-        self.peek(-1) 
+        self.peek(-1)
     }
 
     // try_take: if match returns token and move cursor forward, else keeps cursor at position
@@ -48,12 +47,12 @@ impl TokenStream {
         match compare(token) {
             Some(val) => {
                 self.current_index += 1;
-                return Some(val)
+                return Some(val);
             }
-            None => None 
+            None => None,
         }
     }
-    
+
     pub fn skip(&mut self, count: usize) {
         self.current_index += count;
     }
@@ -61,19 +60,19 @@ impl TokenStream {
     pub fn skip_if(&mut self, compare: impl Fn(&Token) -> bool) -> bool {
         if compare(self.peek(0)) {
             self.current_index += 1;
-            return true
+            return true;
         }
         false
     }
-    
-    // eat_until: consumes tokens until match, exclusive or inclusive 
+
+    // eat_until: consumes tokens until match, exclusive or inclusive
     pub fn skip_until(&mut self, compare: impl Fn(&Token) -> bool, inclusive: bool) {
         while !compare(self.peek(0)) {
-            self.current_index +=1; 
+            self.current_index += 1;
         }
 
         if inclusive {
-            self.current_index +=1;
+            self.current_index += 1;
         }
     }
 }
