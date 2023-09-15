@@ -1,7 +1,7 @@
-use crate::lexer::{
-    token::{Operator, Token, TokenValue},
+use crate::{lexer::{
+    token::{Token, TokenValue},
     token_stream::TokenStream,
-};
+}, common::operator::Operator};
 
 use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},

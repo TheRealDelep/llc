@@ -43,17 +43,17 @@ pub fn get_tokens(filename: &str) -> Option<TokenStream> {
             continue;
         }
 
-        if let Some(mut ops) = build_operator(current_line, filename) {
+        if let Some(mut ops) = build_operator(current_line) {
             tokens.append(&mut ops);
             continue;
         }
 
-        if let Some(token) = build_literal(current_line, filename) {
+        if let Some(token) = build_literal(current_line) {
             tokens.push(token);
             continue;
         }
 
-        if let Some(token) = build_single_char_token(current_line, filename) {
+        if let Some(token) = build_single_char_token(current_line) {
             tokens.push(token);
             continue;
         }
@@ -126,7 +126,7 @@ fn eat_white_spaces(line: &mut FileLine) -> bool {
     }
 }
 
-fn build_single_char_token<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
+fn build_single_char_token<'a>(line: &mut FileLine) -> Option<Token> {
     if let Some(c) = line.get_next() {
         let value = match c {
             '{' => TokenValue::OpenCurly,

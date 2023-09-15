@@ -12,7 +12,7 @@ use ccg::{
     },
     file::c_file::CFile,
 };
-use llc_core::parser::{ast_node::AstNodeData, self};
+use llc_core::parser::ast_node::AstNodeData;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

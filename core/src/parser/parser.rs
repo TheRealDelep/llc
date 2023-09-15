@@ -1,8 +1,7 @@
 use super::ast_node::{Parsable, ParsingResult};
-use super::declaration::{self, Declaration};
 use super::errors::SyntaxError;
-use super::{ast_node::AstNode, indentifier::Identifier};
-use crate::lexer::token::{Operator, Token, TokenValue};
+use super::ast_node::AstNode;
+use crate::lexer::token::{Token, TokenValue};
 use crate::lexer::{lexer, token_stream::TokenStream};
 
 pub struct FileAst {

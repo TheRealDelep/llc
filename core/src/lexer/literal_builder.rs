@@ -1,23 +1,24 @@
+use crate::common::{literal::Literal, keyword};
 
-use super::{file_stream::FileLine, token::{Token, TokenValue, self}};
+use super::{file_stream::FileLine, token::{Token, TokenValue}};
 
-pub fn build_literal<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
-    if let Some(token) = build_literal_str(line, filename) {
+pub fn build_literal<'a>(line: &mut FileLine) -> Option<Token> {
+    if let Some(token) = build_literal_str(line) {
         return Some(token);
     }
 
-    if let Some(token) = build_literal_num(line, filename) {
+    if let Some(token) = build_literal_num(line) {
         return Some(token);
     }
 
-    if let Some(token) = build_identifier(line, filename) {
+    if let Some(token) = build_identifier(line) {
         return Some(token);
     }
 
     None
 }
 
-fn build_literal_str<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
+fn build_literal_str<'a>(line: &mut FileLine) -> Option<Token> {
     let mut lit = String::new();
     let from = line.current_index + 1;
 
@@ -42,13 +43,13 @@ fn build_literal_str<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
                 line_number: line.number + 1,
                 from,
                 to: from + lit.len() - 1,
-                value: TokenValue::Literal(token::LiteralValue::String(lit.into_boxed_str())),
+                value: TokenValue::Literal(Literal::String(lit.into_boxed_str())),
             }),
         };
     }
 }
 
-fn build_literal_num<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
+fn build_literal_num<'a>(line: &mut FileLine) -> Option<Token> {
     let mut lit = String::new();
     let from = line.current_index + 1;
     loop {
@@ -67,13 +68,13 @@ fn build_literal_num<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token
                 from,
                 to: from + lit.len() - 1,
                 line_number: line.number + 1,
-                value: TokenValue::Literal(token::LiteralValue::Integer(lit.into_boxed_str())),
+                value: TokenValue::Literal(Literal::Integer(lit.into_boxed_str())),
             }),
         };
     }
 }
 
-fn build_identifier<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token> {
+fn build_identifier<'a>(line: &mut FileLine) -> Option<Token> {
     let mut identifier = String::new();
     let from = line.current_index + 1;
     loop {
@@ -91,7 +92,7 @@ fn build_identifier<'a>(line: &mut FileLine, filename: &'a str) -> Option<Token>
             false => Some(Token {
                 from,
                 to: from + identifier.len() - 1,
-                value: match token::parse_keyword(&identifier) {
+                value: match keyword::parse_keyword(&identifier) {
                     Some(k) => TokenValue::Keyword(k),
                     None => TokenValue::Identifier(identifier.into_boxed_str()),
                 },

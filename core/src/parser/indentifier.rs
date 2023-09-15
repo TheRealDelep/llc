@@ -42,7 +42,7 @@ impl Parsable for Identifier {
 }
 
 impl AstNodeData for Identifier {
-    fn print(&self, file_ast: &super::parser::FileAst) -> String {
+    fn print(&self, _: &FileAst) -> String {
         format!("Identifier({})", self.value)
     }
 

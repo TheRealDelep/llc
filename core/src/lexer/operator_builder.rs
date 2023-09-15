@@ -1,6 +1,8 @@
-use super::{file_stream::FileLine, token::{Token, TokenValue, Operator, self}};
+use crate::common::operator::{Operator, self};
 
-pub fn build_operator<'a>(line: &mut FileLine, filename: &'a str) -> Option<Vec<Token>> {
+use super::{file_stream::FileLine, token::{Token, TokenValue}};
+
+pub fn build_operator<'a>(line: &mut FileLine) -> Option<Vec<Token>> {
     let mut result = Vec::new();
 
     match get_operator(line) {
@@ -45,7 +47,7 @@ fn get_operator(line: &mut FileLine) -> OperatorBuilderResult {
             None => return None,
         };
 
-        let op = match token::parse_operator(*c) {
+        let op = match operator::parse_operator(*c) {
             Some(op) => op,
             None => {
                 line.backtrack(1);
@@ -59,7 +61,7 @@ fn get_operator(line: &mut FileLine) -> OperatorBuilderResult {
     if let Some(res1) = get_op() {
         if let Some(res2) = get_op() {
             let s = &String::from_iter(&[res1.0, res2.0]);
-            if let Some(comp_op) = token::parse_comp_operator(s.as_str()) {
+            if let Some(comp_op) = operator::parse_comp_operator(s.as_str()) {
                 return OperatorBuilderResult::One(comp_op);
             }
             return OperatorBuilderResult::Two(res1.1, res2.1);
