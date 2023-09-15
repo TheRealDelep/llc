@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::common::{literal::Literal, operator::Operator, keyword::Keyword};
+use crate::common::{literal::LiteralValue, operator::Operator, keyword::Keyword};
 
 #[derive(Debug, Default)]
 pub struct Token {
@@ -17,7 +17,7 @@ pub enum TokenValue {
     #[default]
     Null,
     Undefined(Box<str>),
-    Literal(Literal),
+    Literal(LiteralValue),
     Operator(Operator),
     Identifier(Box<str>),
     Keyword(Keyword),

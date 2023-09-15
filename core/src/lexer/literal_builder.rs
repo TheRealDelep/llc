@@ -1,4 +1,4 @@
-use crate::common::{literal::Literal, keyword};
+use crate::common::{literal::LiteralValue, keyword};
 
 use super::{file_stream::FileLine, token::{Token, TokenValue}};
 
@@ -43,7 +43,7 @@ fn build_literal_str<'a>(line: &mut FileLine) -> Option<Token> {
                 line_number: line.number + 1,
                 from,
                 to: from + lit.len() - 1,
-                value: TokenValue::Literal(Literal::String(lit.into_boxed_str())),
+                value: TokenValue::Literal(LiteralValue::String(lit.into_boxed_str())),
             }),
         };
     }
@@ -68,7 +68,7 @@ fn build_literal_num<'a>(line: &mut FileLine) -> Option<Token> {
                 from,
                 to: from + lit.len() - 1,
                 line_number: line.number + 1,
-                value: TokenValue::Literal(Literal::Integer(lit.into_boxed_str())),
+                value: TokenValue::Literal(LiteralValue::Integer(lit.into_boxed_str())),
             }),
         };
     }

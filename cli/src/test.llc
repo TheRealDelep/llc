@@ -1,1 +1,1 @@
-hello := bite;
+hello := "Hello, world!";

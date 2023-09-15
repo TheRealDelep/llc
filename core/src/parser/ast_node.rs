@@ -1,4 +1,4 @@
-use crate::lexer::token_stream::TokenStream;
+use crate::lexer::{token_stream::TokenStream, token::Token};
 
 use super::{expression::Expression, parser::{ParserBuffer, FileAst}, statement::Statement};
 
@@ -61,6 +61,15 @@ impl AstNodePos {
             ln_end: last_pos.ln_end,
             ch_start: first_pos.ch_start,
             ch_end: last_pos.ch_end
+        }
+    }
+
+    pub(crate) fn from_token(token: &Token) -> Self {
+        Self {
+            ln_start: token.line_number,
+            ln_end: token.line_number,
+            ch_start: token.from,
+            ch_end: token.to
         }
     }
 }
