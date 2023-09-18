@@ -7,9 +7,10 @@ use crate::{
 };
 
 use super::{
-    ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
+    ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
     expression::Expression,
-    parser::{FileAst, ParserBuffer},
+    parser::FileAst,
+    parser_buffer::ParserBuffer,
 };
 
 pub struct Literal {
@@ -17,8 +18,11 @@ pub struct Literal {
     pub pos: AstNodePos,
 }
 
-impl Parsable for Literal {
-    fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+impl Literal {
+    pub(in crate::parser) fn parse(
+        stream: &mut TokenStream,
+        buffer: &mut ParserBuffer,
+    ) -> ParsingResult {
         let lit = stream.take_if(|t| match t {
             token @ Token {
                 value: TokenValue::Literal(lit),
@@ -33,7 +37,7 @@ impl Parsable for Literal {
         match lit {
             Some(l) => {
                 let node = AstNode::Expression(Expression::Literal(l));
-                return ParsingResult::Ok(buffer.push(node));
+                return ParsingResult::Ok(buffer.push_node(node));
             }
             None => return ParsingResult::Other,
         }

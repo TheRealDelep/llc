@@ -1,3 +1,1 @@
-main := {
-    hello:= "Hello, world!";
-}
+_ := hello;

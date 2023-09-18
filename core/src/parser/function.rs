@@ -4,11 +4,11 @@ use crate::{
 };
 
 use super::{
-    ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
-    errors::SyntaxError,
+    ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
+    syntax_error::SyntaxError,
     expression::Expression,
-    parser::{FileAst, ParserBuffer},
-    statement::Statement,
+    parser::FileAst,
+    statement::Statement, parser_buffer::ParserBuffer,
 };
 
 pub struct Function {
@@ -22,8 +22,8 @@ pub struct FunctionParam {
     pub name: Option<Box<str>>,
 }
 
-impl Parsable for Function {
-    fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+impl  Function {
+    pub (in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
         let begin = match stream.take_if(|t| match t.value {
             TokenValue::OpenCurly => Some((t.line_number, t.from)),
             _ => None,
@@ -39,7 +39,7 @@ impl Parsable for Function {
                 let eof = stream.peek(0);
                 buffer.errors.push(SyntaxError::from_token(
                     eof,
-                    Some(Box::from("Missing closing curly brace }")),
+                    Some(Box::from("Missing scope end }")),
                 ));
                 return ParsingResult::Error;
             }
@@ -48,7 +48,7 @@ impl Parsable for Function {
                 TokenValue::ClosingCurly => Some((t.line_number, t.to)),
                 _ => None,
             }) {
-                return ParsingResult::Ok(buffer.push(AstNode::Expression(Expression::Function(
+                return ParsingResult::Ok(buffer.push_node(AstNode::Expression(Expression::Function(
                     Self {
                         body: statements,
                         params: None,

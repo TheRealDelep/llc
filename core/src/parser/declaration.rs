@@ -7,12 +7,13 @@ use crate::{
 };
 
 use super::{
-    ast_node::{AstNode, AstNodeData, AstNodePos, Parsable, ParsingResult},
-    errors::SyntaxError,
+    ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
     expression::Expression,
     indentifier::Identifier,
-    parser::{FileAst, ParserBuffer},
+    parser::FileAst,
+    parser_buffer::ParserBuffer,
     statement::Statement,
+    syntax_error::SyntaxError,
 };
 
 pub struct Declaration {
@@ -21,8 +22,8 @@ pub struct Declaration {
     pos: AstNodePos,
 }
 
-impl Parsable for Declaration {
-    fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+impl Declaration {
+    pub(in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
         let id_id = match Identifier::parse(stream, buffer) {
             ParsingResult::Ok(i) => i,
             _ => return ParsingResult::Other,
@@ -72,7 +73,7 @@ impl Parsable for Declaration {
         let id = buffer.get(id_id);
         let exp = buffer.get(exp_id);
 
-        return ParsingResult::Ok(buffer.push(AstNode::Statement(Statement::Declaration(
+        return ParsingResult::Ok(buffer.push_node(AstNode::Statement(Statement::Declaration(
             Declaration {
                 identifier_id: id_id,
                 expression_id: exp_id,
