@@ -7,17 +7,17 @@ use super::{
     token::{Token, TokenValue},
     token_stream::TokenStream,
 };
-use crate::lexer::file_stream::FileStream;
+use crate::{lexer::file_stream::FileStream, common::syntax_error::SyntaxError};
 
-pub fn get_tokens(filename: &str) -> Option<TokenStream> {
+pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
     let mut file_stream = get_file_stream(filename);
+    let mut result = TokenStream::new(vec![]);
+    let mut errors = vec![];
 
     let mut current_line = match file_stream.get_next() {
-        None => return None,
+        None => return (result, errors),
         Some(line) => line,
     };
-
-    let mut tokens = vec![];
 
     loop {
         if !current_line.can_read() {
@@ -26,7 +26,7 @@ pub fn get_tokens(filename: &str) -> Option<TokenStream> {
 
             current_line = match file_stream.get_next() {
                 None => {
-                    tokens.push(Token {
+                    result.tokens.push(Token {
                         value: TokenValue::EOF,
                         line_number,
                         from: char_number,
@@ -47,31 +47,32 @@ pub fn get_tokens(filename: &str) -> Option<TokenStream> {
         }
 
         if let Some(mut ops) = build_operator(current_line) {
-            tokens.append(&mut ops);
+            result.tokens.append(&mut ops);
             continue;
         }
 
         if let Some(token) = build_literal(current_line) {
-            tokens.push(token);
+            result.tokens.push(token);
             continue;
         }
 
         if let Some(token) = build_single_char_token(current_line) {
-            tokens.push(token);
+            result.tokens.push(token);
             continue;
         }
 
         if let Some(token) = current_line.get_next() {
-            tokens.push(Token {
+            let token = Token {
                 value: TokenValue::Undefined(token.to_string().into_boxed_str()),
                 line_number: current_line.number,
                 from: current_line.current_index,
                 to: current_line.current_index,
-            });
+            }; 
+            errors.push(SyntaxError::from_token(&token, Some(Box::from(format!("Undefined token. {token}")))))
         }
     }
 
-    Some(TokenStream::new(tokens))
+    (result, errors)
 }
 
 fn get_file_stream(filename: &str) -> FileStream {

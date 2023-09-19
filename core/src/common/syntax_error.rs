@@ -47,4 +47,17 @@ impl SyntaxError {
             },
         }
     }
+
+    pub (crate) fn from_tokens(first: &Token, last: &Token, reason: Option<Box<str>>) -> Self {
+        SyntaxError {
+            ln_start: first.line_number,
+            ln_end: last.line_number,
+            ch_start: first.from,
+            ch_end: last.to,
+            reason: match reason {
+                Some(str) => Box::from(format!("SyntaxError: {}", str)),
+                None => Box::from(format!("SyntaxError. from {0}, to {1}", first.value, last.value))
+            }
+        }
+    }
 }

@@ -55,12 +55,7 @@ impl AstNodePos {
         let first_pos = first.get_pos();
         let last_pos = last.get_pos();
 
-        Self {
-            ln_start: first_pos.ln_start,
-            ln_end: last_pos.ln_end,
-            ch_start: first_pos.ch_start,
-            ch_end: last_pos.ch_end,
-        }
+        Self::combine(first_pos, last_pos) 
     }
 
     pub(crate) fn from_token(token: &Token) -> Self {
@@ -69,6 +64,15 @@ impl AstNodePos {
             ln_end: token.line_number,
             ch_start: token.from,
             ch_end: token.to,
+        }
+    }
+
+    pub (crate) fn combine(begin: &AstNodePos, end: &AstNodePos) -> Self {
+        Self {
+            ln_start: begin.ln_start,
+            ln_end: end.ln_end,
+            ch_start: begin.ch_start,
+            ch_end: end.ch_end,
         }
     }
 }

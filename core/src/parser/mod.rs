@@ -1,3 +1,4 @@
+pub mod return_stmt;
 pub mod ast_node;
 pub mod declaration;
 pub mod expression;

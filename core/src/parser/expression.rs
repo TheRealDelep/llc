@@ -1,5 +1,5 @@
 use crate::{
-    common::syntax_error::SyntaxError,
+    common::{syntax_error::SyntaxError, operator::Operator},
     lexer::{token::TokenValue, token_stream::TokenStream},
 };
 
@@ -25,7 +25,7 @@ impl Expression {
         file_ast: &mut FileAst,
     ) -> ParsingResult {
         match stream.peek(0).value {
-            TokenValue::Identifier(_) | TokenValue::Literal(_) | TokenValue::OpenCurly => {}
+            TokenValue::Identifier(_) | TokenValue::Literal(_) | TokenValue::OpenCurly | TokenValue::Operator(Operator::Into) => {}
             _ => return ParsingResult::Other,
         }
 

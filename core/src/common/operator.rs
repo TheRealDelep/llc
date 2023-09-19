@@ -4,6 +4,7 @@ use phf::phf_map;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Operator {
+    Discard,
     Minus,
     Plus,
     Times,
@@ -26,6 +27,7 @@ impl Display for Operator {
             f,
             "{}",
             match self {
+                Self::Discard => "Discard",
                 Self::Minus => "Minus",
                 Self::Plus => "Plus",
                 Self::Times => "Times",
@@ -84,6 +86,7 @@ static CHAR_OPERATOR_MAP: phf::Map<char, Operator> = phf_map!(
     ':' => Operator::Declaration,
     '>' => Operator::GreaterThan,
     '<' => Operator::LessThan,
+    '_' => Operator::Discard
 );
 
 static COMPOSITE_OPERATOR_MAP: phf::Map<&str, Operator> = phf_map!(

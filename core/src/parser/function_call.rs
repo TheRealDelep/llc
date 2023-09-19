@@ -12,7 +12,7 @@ use super::{
 
 pub struct FunctionCall {
     pub identifier_id: usize,
-    pub param_id: usize,
+    pub param_id: Option<usize>,
     pub pos: AstNodePos,
 }
 
@@ -21,11 +21,18 @@ impl FunctionCall {
         stream: &mut TokenStream,
         file_ast: &mut FileAst,
     ) -> ParsingResult {
-        if !stream.skip_if(|t| t.value == TokenValue::Operator(Operator::Into)) {
-            return ParsingResult::Other;
-        }
+        let op_pos = match stream.take_if(|t| match t.value {
+            TokenValue::Operator(Operator::Return) => Some(AstNodePos::from_token(&t)),
+            _ => None
+        }) {
+            Some(pos) => pos,
+            None => return ParsingResult::Other
+        };
 
-        let param_id = file_ast.nodes.len() - 1;
+        let param_id = match &file_ast.nodes[file_ast.nodes.len() - 1] {
+            AstNode::Expression(exp) => Some(file_ast.nodes.len() - 1),
+            AstNode::Statement(_) => None
+        };
 
         let identifier_id = match Identifier::parse(stream, file_ast) {
             ParsingResult::Ok => file_ast.nodes.len() - 1,
@@ -40,10 +47,18 @@ impl FunctionCall {
             }
         };
 
-        let param = &file_ast.nodes[param_id];
+        
+
         let exp = &file_ast.nodes[identifier_id];
 
-        let pos = AstNodePos::from_nodes(&param, &exp);
+        let pos = match param_id {
+            Some(id) => {
+                let param = &file_ast.nodes[id];
+                AstNodePos::from_nodes(param, exp)
+            },
+            None => AstNodePos::combine(&op_pos, exp.get_pos())
+        };
+
         let node = AstNode::Expression(Expression::FunctionCall(FunctionCall {
             identifier_id,
             param_id,
@@ -56,13 +71,11 @@ impl FunctionCall {
 
 impl AstNodeData for FunctionCall {
     fn print(&self, file_ast: &FileAst) -> String {
-        let id = file_ast
-            .nodes
-            .get(self.identifier_id)
-            .unwrap()
-            .print(file_ast);
-
-        let param = file_ast.nodes.get(self.param_id).unwrap().print(file_ast);
+        let id = file_ast.nodes[self.identifier_id].print(file_ast);
+        let param = match self.param_id {
+            Some(id) => file_ast.nodes[id].print(file_ast),
+            None => "".to_string()
+        };
 
         format!("Function Call (Identifier: {0}, Params: [{1}])", id, param)
     }

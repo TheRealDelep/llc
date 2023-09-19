@@ -82,7 +82,7 @@ fn build_identifier<'a>(line: &mut FileLine) -> Option<Token> {
     let from = line.current_index + 1;
     loop {
         if let Some(c) = line.get_next() {
-            if c.is_alphabetic() {
+            if c.is_alphabetic() || *c == '_'{
                 identifier.push(*c);
                 continue;
             }
