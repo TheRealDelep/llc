@@ -1,5 +1,5 @@
 use crate::{
-    common::operator::Operator,
+    common::{operator::Operator, syntax_error::SyntaxError},
     lexer::{
         token::{Token, TokenValue},
         token_stream::TokenStream,
@@ -11,9 +11,7 @@ use super::{
     expression::Expression,
     indentifier::Identifier,
     parser::FileAst,
-    parser_buffer::ParserBuffer,
     statement::Statement,
-    syntax_error::SyntaxError,
 };
 
 pub struct Declaration {
@@ -23,9 +21,12 @@ pub struct Declaration {
 }
 
 impl Declaration {
-    pub(in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
-        let id_id = match Identifier::parse(stream, buffer) {
-            ParsingResult::Ok(i) => i,
+    pub(in crate::parser) fn parse(
+        stream: &mut TokenStream,
+        file_ast: &mut FileAst,
+    ) -> ParsingResult {
+        let id_id = match Identifier::parse(stream, file_ast) {
+            ParsingResult::Ok => file_ast.nodes.len() - 1,
             _ => return ParsingResult::Other,
         };
 
@@ -39,8 +40,8 @@ impl Declaration {
             return ParsingResult::Other;
         }
 
-        let exp_id = match Expression::parse(stream, buffer) {
-            ParsingResult::Ok(id) => id,
+        let exp_id = match Expression::parse(stream, file_ast) {
+            ParsingResult::Ok => file_ast.nodes.len() - 1,
             ParsingResult::Error => return ParsingResult::Error,
             ParsingResult::Other => {
                 let token = stream.take();
@@ -65,21 +66,21 @@ impl Declaration {
                     reason: Box::from("Expected a value after operator :="),
                 };
 
-                buffer.errors.push(err);
+                file_ast.errors.push(err);
                 return ParsingResult::Error;
             }
         };
 
-        let id = buffer.get(id_id);
-        let exp = buffer.get(exp_id);
+        let id = &file_ast.nodes[id_id];
+        let exp = &file_ast.nodes[exp_id];
+        let node = AstNode::Statement(Statement::Declaration(Declaration {
+            identifier_id: id_id,
+            expression_id: exp_id,
+            pos: AstNodePos::from_nodes(&id, &exp),
+        }));
 
-        return ParsingResult::Ok(buffer.push_node(AstNode::Statement(Statement::Declaration(
-            Declaration {
-                identifier_id: id_id,
-                expression_id: exp_id,
-                pos: AstNodePos::from_nodes(id, exp),
-            },
-        ))));
+        file_ast.nodes.push(node);
+        return ParsingResult::Ok;
     }
 }
 

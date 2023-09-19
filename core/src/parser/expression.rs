@@ -1,4 +1,7 @@
-use crate::lexer::{token::TokenValue, token_stream::TokenStream};
+use crate::{
+    common::syntax_error::SyntaxError,
+    lexer::{token::TokenValue, token_stream::TokenStream},
+};
 
 use super::{
     ast_node::{AstNodeData, AstNodePos, ParsingResult},
@@ -7,8 +10,6 @@ use super::{
     indentifier::Identifier,
     literal::Literal,
     parser::FileAst,
-    parser_buffer::ParserBuffer,
-    syntax_error::SyntaxError,
 };
 
 pub enum Expression {
@@ -19,23 +20,26 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub(in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+    pub(in crate::parser) fn parse(
+        stream: &mut TokenStream,
+        file_ast: &mut FileAst,
+    ) -> ParsingResult {
         match stream.peek(0).value {
             TokenValue::Identifier(_) | TokenValue::Literal(_) | TokenValue::OpenCurly => {}
             _ => return ParsingResult::Other,
         }
 
-        if let id @ ParsingResult::Ok(_) = parse_left_side(stream, buffer) {
+        if let ParsingResult::Ok = parse_left_side(stream, file_ast) {
             match stream.peek(0).value {
-                TokenValue::EOI => return id,
+                TokenValue::EOI => return ParsingResult::Ok,
                 _ => {}
             }
         }
 
         loop {
-            if let fcall @ ParsingResult::Ok(_) = parse_right_side(stream, buffer) {
+            if let ParsingResult::Ok = parse_right_side(stream, file_ast) {
                 match stream.peek(0).value {
-                    TokenValue::EOI => return fcall,
+                    TokenValue::EOI => return ParsingResult::Ok,
                     _ => continue,
                 }
             }
@@ -46,7 +50,7 @@ impl Expression {
             "Unexpected token encountered while trying to parse expression. Expected one of(;, function call, function body, operator) after {0} but found {1}", 
             first.value, second.value);
 
-            buffer.errors.push(SyntaxError::from_token(
+            file_ast.errors.push(SyntaxError::from_token(
                 stream.peek(1),
                 Some(reason.into_boxed_str()),
             ));
@@ -55,33 +59,33 @@ impl Expression {
     }
 }
 
-fn parse_right_side(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
-    if let res @ ParsingResult::Ok(_) = FunctionCall::parse(stream, buffer) {
+fn parse_right_side(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
+    if let res @ ParsingResult::Ok = FunctionCall::parse(stream, file_ast) {
         return res;
     }
 
     ParsingResult::Other
 }
 
-fn parse_left_side(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
-    if let ParsingResult::Ok(id) = parse_single_token_exp(stream, buffer) {
-        return ParsingResult::Ok(id);
+fn parse_left_side(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
+    if let ParsingResult::Ok = parse_single_token_exp(stream, file_ast) {
+        return ParsingResult::Ok;
     }
 
-    if let ParsingResult::Ok(id) = Function::parse(stream, buffer) {
-        return ParsingResult::Ok(id);
+    if let ParsingResult::Ok = Function::parse(stream, file_ast) {
+        return ParsingResult::Ok;
     }
 
     ParsingResult::Other
 }
 
-fn parse_single_token_exp(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
-    if let ParsingResult::Ok(id) = Identifier::parse(stream, buffer) {
-        return ParsingResult::Ok(id);
+fn parse_single_token_exp(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
+    if let ParsingResult::Ok = Identifier::parse(stream, file_ast) {
+        return ParsingResult::Ok;
     }
 
-    if let ParsingResult::Ok(id) = Literal::parse(stream, buffer) {
-        return ParsingResult::Ok(id);
+    if let ParsingResult::Ok = Literal::parse(stream, file_ast) {
+        return ParsingResult::Ok;
     }
 
     ParsingResult::Other

@@ -5,7 +5,6 @@ use super::{
     declaration::Declaration,
     expression::Expression,
     parser::FileAst,
-    parser_buffer::ParserBuffer,
 };
 
 pub enum Statement {
@@ -16,21 +15,21 @@ pub enum Statement {
 impl Statement {
     pub(in crate::parser) fn parse(
         stream: &mut TokenStream,
-        buffer: &mut ParserBuffer,
+        file_ast: &mut FileAst,
     ) -> ParsingResult {
-        match Declaration::parse(stream, buffer) {
-            ParsingResult::Ok(id) => {
+        match Declaration::parse(stream, file_ast) {
+            ParsingResult::Ok => {
                 stream.skip_if(|t| t.value == TokenValue::EOI);
-                return ParsingResult::Ok(id);
+                return ParsingResult::Ok;
             }
             ParsingResult::Error => return ParsingResult::Error,
             ParsingResult::Other => {}
         }
 
-        match Expression::parse(stream, buffer) {
-            ParsingResult::Ok(id) => {
+        match Expression::parse(stream, file_ast) {
+            ParsingResult::Ok => {
                 stream.skip_if(|t| t.value == TokenValue::EOI);
-                return ParsingResult::Ok(id);
+                return ParsingResult::Ok;
             }
             ParsingResult::Error => return ParsingResult::Error,
             ParsingResult::Other => return ParsingResult::Other,

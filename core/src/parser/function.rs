@@ -1,19 +1,18 @@
 use crate::{
+    common::syntax_error::SyntaxError,
     lexer::{token::TokenValue, token_stream::TokenStream},
     type_system::llc_type::Type,
 };
 
 use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
-    syntax_error::SyntaxError,
     expression::Expression,
     parser::FileAst,
-    statement::Statement, parser_buffer::ParserBuffer,
+    statement::Statement,
 };
 
 pub struct Function {
     pub pos: AstNodePos,
-    params: Option<Vec<FunctionParam>>,
     body: Vec<usize>,
 }
 
@@ -22,8 +21,11 @@ pub struct FunctionParam {
     pub name: Option<Box<str>>,
 }
 
-impl  Function {
-    pub (in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+impl Function {
+    pub(in crate::parser) fn parse(
+        stream: &mut TokenStream,
+        file_ast: &mut FileAst,
+    ) -> ParsingResult {
         let begin = match stream.take_if(|t| match t.value {
             TokenValue::OpenCurly => Some((t.line_number, t.from)),
             _ => None,
@@ -37,7 +39,7 @@ impl  Function {
         loop {
             if !stream.can_read() {
                 let eof = stream.peek(0);
-                buffer.errors.push(SyntaxError::from_token(
+                file_ast.errors.push(SyntaxError::from_token(
                     eof,
                     Some(Box::from("Missing scope end }")),
                 ));
@@ -48,22 +50,21 @@ impl  Function {
                 TokenValue::ClosingCurly => Some((t.line_number, t.to)),
                 _ => None,
             }) {
-                return ParsingResult::Ok(buffer.push_node(AstNode::Expression(Expression::Function(
-                    Self {
-                        body: statements,
-                        params: None,
-                        pos: AstNodePos {
-                            ln_start: begin.0,
-                            ln_end: end.0,
-                            ch_start: begin.1,
-                            ch_end: end.1,
-                        },
+                let node = AstNode::Expression(Expression::Function(Self {
+                    body: statements,
+                    pos: AstNodePos {
+                        ln_start: begin.0,
+                        ln_end: end.0,
+                        ch_start: begin.1,
+                        ch_end: end.1,
                     },
-                ))));
+                }));
+                file_ast.nodes.push(node);
+                return ParsingResult::Ok;
             }
 
-            if let ParsingResult::Ok(stmt) = Statement::parse(stream, buffer) {
-                statements.push(stmt)
+            if let ParsingResult::Ok = Statement::parse(stream, file_ast) {
+                statements.push(file_ast.nodes.len() - 1)
             }
         }
     }

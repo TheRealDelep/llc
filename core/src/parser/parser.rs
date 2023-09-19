@@ -1,9 +1,8 @@
 use std::fmt::Display;
 
-use super::ast_node::{AstNode, AstNodeData};
 use super::ast_node::ParsingResult;
-use super::parser_buffer::ParserBuffer;
-use super::syntax_error::SyntaxError;
+use super::ast_node::{AstNode, AstNodeData};
+use crate::common::syntax_error::SyntaxError;
 use crate::lexer::token::{Token, TokenValue};
 use crate::lexer::{lexer, token_stream::TokenStream};
 
@@ -17,21 +16,22 @@ pub struct FileAst {
 impl FileAst {
     pub fn parse_file<'a>(file_name: &'a str) -> Self {
         let mut stream = get_tokens(file_name);
-        
-        let mut root_nodes: Vec<usize> = vec![];
-        let mut nodes: Vec<AstNode> = vec![];
-        let mut errors: Vec<SyntaxError> = vec![];
 
-        let mut buffer = ParserBuffer::new();
+        let mut file_ast = FileAst {
+            file_name: Box::from(file_name),
+            nodes: vec![],
+            errors: vec![],
+            root_nodes: vec![],
+        };
 
         'parse: loop {
             if !stream.can_read() {
                 break 'parse;
             }
-            
-            match AstNode::parse(&mut stream, &mut buffer) {
-                ParsingResult::Ok(id) => {
-                    root_nodes.push(id);
+
+            match AstNode::parse(&mut stream, &mut file_ast) {
+                ParsingResult::Ok => {
+                    file_ast.root_nodes.push(file_ast.nodes.len() - 1);
                 }
                 _ => {
                     stream.skip_until(
@@ -48,12 +48,7 @@ impl FileAst {
             }
         }
 
-        FileAst {
-            file_name: Box::from(file_name),
-            nodes: buffer.nodes,
-            errors: buffer.errors,
-            root_nodes
-        }
+        file_ast
     }
 }
 

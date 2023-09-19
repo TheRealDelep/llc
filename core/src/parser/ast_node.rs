@@ -1,6 +1,5 @@
 use crate::lexer::{token::Token, token_stream::TokenStream};
 
-use super::parser_buffer::ParserBuffer;
 use super::{expression::Expression, parser::FileAst, statement::Statement};
 
 pub trait AstNodeData {
@@ -9,7 +8,7 @@ pub trait AstNodeData {
 }
 
 pub enum ParsingResult {
-    Ok(usize),
+    Ok,
     Error,
     Other,
 }
@@ -29,9 +28,9 @@ pub enum AstNode {
 impl AstNode {
     pub(in crate::parser) fn parse(
         stream: &mut TokenStream,
-        buffer: &mut ParserBuffer,
+        file_ast: &mut FileAst,
     ) -> ParsingResult {
-        Statement::parse(stream, buffer)
+        Statement::parse(stream, file_ast)
     }
 }
 

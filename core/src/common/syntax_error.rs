@@ -35,7 +35,7 @@ impl<'a> Display for SyntaxError {
 }
 
 impl SyntaxError {
-    pub fn from_token(token: &Token, reason: Option<Box<str>>) -> Self {
+    pub(crate) fn from_token(token: &Token, reason: Option<Box<str>>) -> Self {
         SyntaxError {
             ln_start: token.line_number,
             ln_end: token.line_number,

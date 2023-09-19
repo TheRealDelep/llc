@@ -1,13 +1,13 @@
 use crate::{
-    common::operator::Operator,
+    common::{operator::Operator, syntax_error::SyntaxError},
     lexer::{token::TokenValue, token_stream::TokenStream},
 };
 
 use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
-    syntax_error::SyntaxError,
     expression::Expression,
-    indentifier::Identifier, parser_buffer::ParserBuffer, parser::FileAst,
+    indentifier::Identifier,
+    parser::FileAst,
 };
 
 pub struct FunctionCall {
@@ -17,30 +17,40 @@ pub struct FunctionCall {
 }
 
 impl FunctionCall {
-    pub(in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+    pub(in crate::parser) fn parse(
+        stream: &mut TokenStream,
+        file_ast: &mut FileAst,
+    ) -> ParsingResult {
         if !stream.skip_if(|t| t.value == TokenValue::Operator(Operator::Into)) {
-            return ParsingResult::Other
+            return ParsingResult::Other;
         }
 
-        let identifier_id = match Identifier::parse(stream, buffer) {
-            ParsingResult::Ok(id) => id,
+        let param_id = file_ast.nodes.len() - 1;
+
+        let identifier_id = match Identifier::parse(stream, file_ast) {
+            ParsingResult::Ok => file_ast.nodes.len() - 1,
             ParsingResult::Error => return ParsingResult::Error,
             ParsingResult::Other => {
                 let token = stream.peek(0);
                 let reason = Box::from(format!("Expected an expression after operator -> in function call expression but found {}.", token.value));
-                buffer.errors.push(SyntaxError::from_token(token, Some(reason)));
-
-                return ParsingResult::Error
+                file_ast
+                    .errors
+                    .push(SyntaxError::from_token(token, Some(reason)));
+                return ParsingResult::Error;
             }
         };
 
-        let param_id = buffer.get_node_id(buffer.len());
-        let param = buffer.get(param_id);
-        let exp = buffer.get(identifier_id);
+        let param = &file_ast.nodes[param_id];
+        let exp = &file_ast.nodes[identifier_id];
 
-        let pos = AstNodePos::from_nodes(param, exp);
-        let node = AstNode::Expression(Expression::FunctionCall(FunctionCall { identifier_id, param_id, pos}));
-        ParsingResult::Ok(buffer.push_node(node))
+        let pos = AstNodePos::from_nodes(&param, &exp);
+        let node = AstNode::Expression(Expression::FunctionCall(FunctionCall {
+            identifier_id,
+            param_id,
+            pos,
+        }));
+        file_ast.nodes.push(node);
+        ParsingResult::Ok
     }
 }
 
@@ -52,16 +62,9 @@ impl AstNodeData for FunctionCall {
             .unwrap()
             .print(file_ast);
 
-        let param = file_ast
-            .nodes
-            .get(self.param_id)
-            .unwrap()
-            .print(file_ast);
+        let param = file_ast.nodes.get(self.param_id).unwrap().print(file_ast);
 
-        format!(
-            "Function Call (Identifier: {0}, Params: [{1}])",
-            id, param
-        )
+        format!("Function Call (Identifier: {0}, Params: [{1}])", id, param)
     }
 
     fn get_pos(&self) -> &super::ast_node::AstNodePos {

@@ -6,7 +6,7 @@ use crate::lexer::{
 use super::{
     ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
     expression::Expression,
-    parser::FileAst, parser_buffer::ParserBuffer,
+    parser::FileAst,
 };
 
 pub struct Identifier {
@@ -15,7 +15,10 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    pub(in crate::parser) fn parse(stream: &mut TokenStream, buffer: &mut ParserBuffer) -> ParsingResult {
+    pub(in crate::parser) fn parse(
+        stream: &mut TokenStream,
+        file_ast: &mut FileAst,
+    ) -> ParsingResult {
         let identifier = stream.take_if(|t| match t {
             Token {
                 value: TokenValue::Identifier(id),
@@ -36,7 +39,10 @@ impl Identifier {
         });
 
         match identifier {
-            Some(node) => ParsingResult::Ok(buffer.push_node(node)),
+            Some(node) => {
+                file_ast.nodes.push(node);
+                ParsingResult::Ok
+            }
             None => ParsingResult::Other,
         }
     }
