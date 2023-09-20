@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::lexer::{token::Token, token_stream::TokenStream};
 
 use super::{expression::Expression, parser::FileAst, statement::Statement};
@@ -74,5 +76,25 @@ impl AstNodePos {
             ch_start: begin.ch_start,
             ch_end: end.ch_end,
         }
+    }
+}
+
+impl Display for AstNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: String = match self {
+            AstNode::Expression(exp) => match exp {
+                Expression::Function(_) => "Function_Body".to_string(),
+                Expression::FunctionCall(_) => "Function_Call".to_string(),
+                Expression::Identifier(id) => format!("Identifier({})", id.value),
+                Expression::Literal(lit) => format!("Literal({})", lit.value),
+            },
+            AstNode::Statement(stmt) => match stmt {
+                Statement::Declaration(_) => "Declaration".to_string(),
+                Statement::Expression(_) => "ExpressionStatement".to_string(),
+                Statement::Return(_) => "Return".to_string()
+            }
+        };
+
+        write!(f, "{}", s)
     }
 }

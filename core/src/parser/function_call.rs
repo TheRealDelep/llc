@@ -22,7 +22,7 @@ impl FunctionCall {
         file_ast: &mut FileAst,
     ) -> ParsingResult {
         let op_pos = match stream.take_if(|t| match t.value {
-            TokenValue::Operator(Operator::Return) => Some(AstNodePos::from_token(&t)),
+            TokenValue::Operator(Operator::Into) => Some(AstNodePos::from_token(&t)),
             _ => None
         }) {
             Some(pos) => pos,
@@ -30,7 +30,7 @@ impl FunctionCall {
         };
 
         let param_id = match &file_ast.nodes[file_ast.nodes.len() - 1] {
-            AstNode::Expression(exp) => Some(file_ast.nodes.len() - 1),
+            AstNode::Expression(_) => Some(file_ast.nodes.len() - 1),
             AstNode::Statement(_) => None
         };
 
@@ -46,8 +46,6 @@ impl FunctionCall {
                 return ParsingResult::Error;
             }
         };
-
-        
 
         let exp = &file_ast.nodes[identifier_id];
 

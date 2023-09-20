@@ -1,8 +1,4 @@
 main := {
-    hello := -> get_hello_str;
-};
- 
-
-get_hello_str := {
-    => "Hello, world!";
+    a := -> b;
+    c := a -> d;
 };

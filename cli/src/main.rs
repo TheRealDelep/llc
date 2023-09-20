@@ -24,7 +24,9 @@ fn main() {
 
     let res = FileAst::parse_file(path);
 
-    println!("{}", res);
+    for node in res.nodes {
+        print!("{} ", node);
+    }
 
     if !res.errors.is_empty() {
         eprintln!("Build failed: Errors happened while compiling the file {}.", res.file_name)
