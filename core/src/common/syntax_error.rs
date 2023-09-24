@@ -2,6 +2,9 @@ use std::fmt::Display;
 
 use crate::lexer::token::Token;
 
+use super::position::FileSpan;
+
+
 #[derive(Debug)]
 pub enum CompileError {
     Syntax(SyntaxError),
@@ -9,10 +12,7 @@ pub enum CompileError {
 
 #[derive(Debug)]
 pub struct SyntaxError {
-    pub ln_start: usize,
-    pub ln_end: usize,
-    pub ch_start: usize,
-    pub ch_end: usize,
+    pub position: FileSpan,
     pub reason: Box<str>,
 }
 

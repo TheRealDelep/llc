@@ -1,7 +1,7 @@
 use crate::{
     common::literal::LiteralValue,
     lexer::{
-        token::{Token, TokenValue},
+        token::{Token, TokenKind},
         token_stream::TokenStream,
     },
 };
@@ -24,7 +24,7 @@ impl Literal {
     ) -> ParsingResult {
         let lit = stream.take_if(|t| match t {
             token @ Token {
-                value: TokenValue::Literal(lit),
+                value: TokenKind::Literal(lit),
                 ..
             } => Some(Literal {
                 value: lit.clone(),

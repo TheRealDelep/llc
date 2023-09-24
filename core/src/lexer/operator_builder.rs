@@ -2,7 +2,7 @@ use crate::common::operator::{self, Operator};
 
 use super::{
     file_stream::FileLine,
-    token::{Token, TokenValue},
+    token::{Token, TokenKind},
 };
 
 pub fn build_operator<'a>(line: &mut FileLine) -> Option<Vec<Token>> {
@@ -10,28 +10,26 @@ pub fn build_operator<'a>(line: &mut FileLine) -> Option<Vec<Token>> {
 
     match get_operator(line) {
         OperatorBuilderResult::None => return None,
-        OperatorBuilderResult::One(op) => result.push(Token {
-            line_number: line.number + 1,
-            from: match op.is_composite() {
+        OperatorBuilderResult::One(op) => result.push(Token::new (
+            TokenKind::Operator(op),
+            line.number + 1,
+            match op.is_composite() {
                 true => line.current_index - 1,
                 false => line.current_index,
             },
-            to: line.current_index,
-            value: TokenValue::Operator(op),
-        }),
+            line.current_index,
+        )),
         OperatorBuilderResult::Two(op1, op2) => {
-            result.push(Token {
-                line_number: line.number + 1,
-                from: line.current_index,
-                to: line.current_index,
-                value: TokenValue::Operator(op1),
-            });
-            result.push(Token {
-                line_number: line.number + 1,
-                from: line.current_index + 1,
-                to: line.current_index + 1,
-                value: TokenValue::Operator(op2),
-            });
+            result.push(Token::single_char (
+                TokenKind::Operator(op1),
+                line.number + 1,
+                line.current_index,
+            ));
+            result.push(Token::single_char(
+                TokenKind::Operator(op2),
+                line.number + 1,
+                line.current_index + 1,
+            ));
         }
     };
     Some(result)

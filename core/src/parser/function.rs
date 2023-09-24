@@ -1,6 +1,6 @@
 use crate::{
     common::syntax_error::SyntaxError,
-    lexer::{token::TokenValue, token_stream::TokenStream},
+    lexer::{token::TokenKind, token_stream::TokenStream},
     type_system::llc_type::Type,
 };
 
@@ -27,7 +27,7 @@ impl Function {
         file_ast: &mut FileAst,
     ) -> ParsingResult {
         let begin = match stream.take_if(|t| match t.value {
-            TokenValue::OpenCurly => Some((t.line_number, t.from)),
+            TokenKind::OpenCurly => Some((t.line_number, t.from)),
             _ => None,
         }) {
             Some(b) => b,
@@ -47,7 +47,7 @@ impl Function {
             }
 
             if let Some(end) = stream.take_if(|t| match t.value {
-                TokenValue::ClosingCurly => Some((t.line_number, t.to)),
+                TokenKind::ClosingCurly => Some((t.line_number, t.to)),
                 _ => None,
             }) {
                 let node = AstNode::Expression(Expression::Function(Self {

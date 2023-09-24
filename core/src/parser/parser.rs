@@ -1,10 +1,11 @@
 use std::fmt::Display;
 
 use super::ast_node::ParsingResult;
-use super::ast_node::{AstNode, AstNodeData};
+use super::ast_node::AstNode;
+use crate::common::position::FileSpan;
 use crate::common::syntax_error::SyntaxError;
-use crate::lexer::token::{Token, TokenValue};
 use crate::lexer::lexer;
+use crate::lexer::token::TokenKind;
 
 pub struct FileAst {
     pub file_name: Box<str>,
@@ -14,7 +15,7 @@ pub struct FileAst {
 }
 
 impl FileAst {
-    pub fn parse_file<'a>(file_name: &'a str) -> Self {
+    pub fn new<'a>(file_name: &'a str) -> Self {
         let (mut stream, errors) = lexer::get_tokens(file_name);
 
         let mut file_ast = FileAst {
@@ -25,7 +26,7 @@ impl FileAst {
         };
 
         if !file_ast.errors.is_empty() {
-            return file_ast
+            return file_ast;
         }
 
         'parse: loop {
@@ -36,41 +37,25 @@ impl FileAst {
             match AstNode::parse(&mut stream, &mut file_ast) {
                 ParsingResult::Ok => {
                     file_ast.root_nodes.push(file_ast.nodes.len() - 1);
-                },
+                }
                 ParsingResult::Error => {
                     stream.skip_until(
-                        |t| match t {
-                            Token {
-                                value: TokenValue::EOI | TokenValue::EOF,
-                                ..
-                            } => true,
-                            _ => false,
-                        },
-                        true,
-                    );
-                },
-                ParsingResult::Other => {
-                    let t = stream.peek(0);
-                    let first = (t.line_number, t.from);
-                    stream.skip_until(
-                        |t| match t {
-                            Token {
-                                value: TokenValue::EOI | TokenValue::EOF,
-                                ..
-                            } => true,
-                            _ => false,
-                        },
+                        |t| t.value == TokenKind::EOI || t.value == TokenKind::EOF,
                         false,
                     );
-                    let last = stream.take();
-                    let error = SyntaxError {
-                        ln_start: first.0,
-                        ln_end: last.line_number,
-                        ch_start: first.1,
-                        ch_end: last.to,
-                        reason: Box::from("Node cannot be parsed with your shit, morron!")
-                    }; 
-                    file_ast.errors.push(error);
+                }
+                ParsingResult::Other => {
+                    let begin = stream.take().position;
+                    stream.skip_until(
+                        |t| t.value == TokenKind::EOI || t.value == TokenKind::EOF,
+                        false,
+                    );
+
+                    let end = stream.take().position;
+                    file_ast.errors.push(SyntaxError {
+                        position: FileSpan::from_file_spans(&begin, &end),
+                        reason: Box::from("Node cannot be parsed with your shit, morron!"),
+                    });
                 }
             };
         }
@@ -84,7 +69,7 @@ impl Display for FileAst {
         let s: Vec<String> = self
             .root_nodes
             .iter()
-            .map(|i| self.nodes.get(*i).unwrap().print(self))
+            .map(|i| self.nodes[*i])
             .collect();
 
         write!(f, "{}", s.join("\n"))

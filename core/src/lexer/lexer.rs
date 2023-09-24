@@ -1,21 +1,33 @@
-use std::{fs, vec};
+use std::{fs, vec, collections::HashMap};
 
 use super::{
     file_stream::FileLine,
-    literal_builder::build_literal,
+    literal_builder::{build_literal, build_identifier},
     operator_builder::build_operator,
-    token::{Token, TokenValue},
+    token::{Token, TokenKind},
     token_stream::TokenStream,
 };
-use crate::{lexer::file_stream::FileStream, common::syntax_error::SyntaxError};
+use crate::{common::{syntax_error::SyntaxError, identifier::Identifier}, lexer::file_stream::FileStream};
+
+pub struct Lexer {
+    file: FileStream,
+    tokens: TokenStream,
+    errors: Vec<SyntaxError>,
+    identifiers: Vec<Identifier>
+}
 
 pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
-    let mut file_stream = get_file_stream(filename);
-    let mut result = TokenStream::new(vec![]);
-    let mut errors = vec![];
+    let mut lexer = Lexer {
+        file: get_file_stream(filename),
+        tokens: vec![],
+        errors: vec![],
+        identifiers: vec![]
+    };
 
-    let mut current_line = match file_stream.get_next() {
-        None => return (result, errors),
+    let mut indentifiers_index: HashMap<str, usize> = HashMap::new();
+
+    let mut current_line = match lexer.file.get_next() {
+        None => return (lexer.tokens, lexer.errors),
         Some(line) => line,
     };
 
@@ -24,14 +36,13 @@ pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
             let line_number = current_line.number + 1;
             let char_number = current_line.current_index + 1;
 
-            current_line = match file_stream.get_next() {
+            current_line = match lexer.file.get_next() {
                 None => {
-                    result.tokens.push(Token {
-                        value: TokenValue::EOF,
+                    lexer.tokens.push(Token::single_char(
+                        TokenKind::EOF,
                         line_number,
-                        from: char_number,
-                        to: char_number,
-                    });
+                        char_number,
+                    ));
                     break;
                 }
                 Some(line) => line,
@@ -47,32 +58,40 @@ pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
         }
 
         if let Some(mut ops) = build_operator(current_line) {
-            result.tokens.append(&mut ops);
+            lexer.tokens.append(&mut ops);
             continue;
         }
 
         if let Some(token) = build_literal(current_line) {
-            result.tokens.push(token);
+            lexer.tokens.push(token);
+            continue;
+        }
+
+        if let Some(token) = build_identifier(current_line, &mut lexer.identifiers, indentifiers_index) {
+            lexer.tokens.push(token);
             continue;
         }
 
         if let Some(token) = build_single_char_token(current_line) {
-            result.tokens.push(token);
+            lexer.tokens.push(token);
             continue;
         }
 
         if let Some(token) = current_line.get_next() {
-            let token = Token {
-                value: TokenValue::Undefined(token.to_string().into_boxed_str()),
-                line_number: current_line.number,
-                from: current_line.current_index,
-                to: current_line.current_index,
-            }; 
-            errors.push(SyntaxError::from_token(&token, Some(Box::from(format!("Undefined token. {token}")))))
+            let token = Token::single_char(
+                TokenKind::Undefined(token.to_string().into_boxed_str()),
+                current_line.number,
+                current_line.current_index,
+            );
+
+            lexer.errors.push(SyntaxError::from_token(
+                &token,
+                Some(Box::from(format!("Undefined token. {token}"))),
+            ))
         }
     }
 
-    (result, errors)
+    (lexer.tokens, lexer.errors)
 }
 
 fn get_file_stream(filename: &str) -> FileStream {
@@ -133,24 +152,23 @@ fn eat_white_spaces(line: &mut FileLine) -> bool {
 fn build_single_char_token<'a>(line: &mut FileLine) -> Option<Token> {
     if let Some(c) = line.get_next() {
         let value = match c {
-            '{' => TokenValue::OpenCurly,
-            '}' => TokenValue::ClosingCurly,
-            '(' => TokenValue::OpenParenthesis,
-            ')' => TokenValue::ClosingParenthesis,
-            ',' => TokenValue::Comma,
-            ';' => TokenValue::EOI,
+            '{' => TokenKind::OpenCurly,
+            '}' => TokenKind::ClosingCurly,
+            '(' => TokenKind::OpenParenthesis,
+            ')' => TokenKind::ClosingParenthesis,
+            ',' => TokenKind::Comma,
+            ';' => TokenKind::EOI,
             _ => {
                 line.backtrack(1);
                 return None;
             }
         };
 
-        return Some(Token {
+        return Some(Token::single_char(
             value,
-            line_number: line.number + 1,
-            from: line.current_index,
-            to: line.current_index,
-        });
+            line.number + 1,
+            line.current_index,
+        ));
     }
     None
 }

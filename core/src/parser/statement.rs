@@ -1,66 +1,40 @@
-use crate::lexer::{token::TokenValue, token_stream::TokenStream};
+use crate::lexer::{token::TokenKind, token_stream::TokenStream};
 
 use super::{
-    ast_node::{AstNodeData, AstNodePos, ParsingResult},
-    declaration::Declaration,
-    expression::Expression,
-    parser::FileAst, return_stmt::Return,
+    ast_node::ParsingResult, declaration, expression::Expression, parser::FileAst, return_stmt,
 };
 
 pub enum Statement {
-    Declaration(Declaration),
-    Expression(Expression),
-    Return(Return)
+    Declaration { start: usize },
+    Expression { start: usize },
+    Return {start: usize },
 }
 
-impl Statement {
-    pub(in crate::parser) fn parse(
-        stream: &mut TokenStream,
-        file_ast: &mut FileAst,
-    ) -> ParsingResult {
-        match Declaration::parse(stream, file_ast) {
-            ParsingResult::Ok => {
-                stream.skip_if(|t| t.value == TokenValue::EOI);
-                return ParsingResult::Ok;
-            }
-            ParsingResult::Error => return ParsingResult::Error,
-            ParsingResult::Other => {}
+pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
+    match declaration::parse(stream, file_ast) {
+        ParsingResult::Ok => {
+            stream.skip_if(|t| t.value == TokenKind::EOI);
+            return ParsingResult::Ok;
         }
-
-        match Expression::parse(stream, file_ast) {
-            ParsingResult::Ok => {
-                stream.skip_if(|t| t.value == TokenValue::EOI);
-                return ParsingResult::Ok;
-            }
-            ParsingResult::Error => return ParsingResult::Error,
-            ParsingResult::Other => {},
-        }
-
-        match Return::parse(stream, file_ast) {
-            ParsingResult::Ok => {
-                stream.skip_if(|t| t.value == TokenValue::EOI);
-                return ParsingResult::Ok
-            },
-            ParsingResult::Error => return ParsingResult::Error,
-            ParsingResult::Other => return ParsingResult::Other
-        }
-    }
-}
-
-impl AstNodeData for Statement {
-    fn print(&self, file_ast: &FileAst) -> String {
-        match self {
-            Self::Declaration(decl) => decl.print(file_ast),
-            Self::Expression(exp) => exp.print(file_ast),
-            Self::Return(ret) => ret.print(file_ast)
-        }
+        ParsingResult::Error => return ParsingResult::Error,
+        ParsingResult::Other => {}
     }
 
-    fn get_pos(&self) -> &AstNodePos {
-        match self {
-            Self::Declaration(decl) => decl.get_pos(),
-            Self::Expression(exp) => exp.get_pos(),
-            Self::Return(ret) => ret.get_pos()
+    match Expression::parse(stream, file_ast) {
+        ParsingResult::Ok => {
+            stream.skip_if(|t| t.value == TokenKind::EOI);
+            return ParsingResult::Ok;
         }
+        ParsingResult::Error => return ParsingResult::Error,
+        ParsingResult::Other => {}
+    }
+
+    match return_stmt::parse(stream, file_ast) {
+        ParsingResult::Ok => {
+            stream.skip_if(|t| t.value == TokenKind::EOI);
+            return ParsingResult::Ok;
+        }
+        ParsingResult::Error => return ParsingResult::Error,
+        ParsingResult::Other => return ParsingResult::Other,
     }
 }

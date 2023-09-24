@@ -1,4 +1,4 @@
-use super::token::{Token, TokenValue};
+use super::token::{Token, TokenKind};
 
 pub struct TokenStream {
     pub tokens: Vec<Token>,
@@ -24,7 +24,7 @@ impl TokenStream {
             None => {
                 let eof = match self.tokens.last() {
                     Some(token) => match token.value {
-                        TokenValue::EOF => token,
+                        TokenKind::EOF => token,
                         _ => panic!("Last token should be EOF"),
                     },
                     None => panic!("Token stream is empty"),

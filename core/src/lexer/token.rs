@@ -1,25 +1,28 @@
 use std::fmt::Display;
 
-use crate::common::{keyword::Keyword, literal::LiteralValue, operator::Operator};
+use crate::common::{
+    keyword::Keyword,
+    literal::LiteralValue,
+    operator::Operator,
+    position::{FilePosition, FileSpan},
+};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Token {
-    pub value: TokenValue,
-    pub line_number: usize,
-    pub from: usize,
-    pub to: usize,
+    pub value: TokenKind,
+    pub position: FileSpan,
 }
 
 pub trait TokenType {}
 
 #[derive(Debug, Default, PartialEq, Eq)]
-pub enum TokenValue {
+pub enum TokenKind {
     #[default]
     Null,
     Undefined(Box<str>),
     Literal(LiteralValue),
     Operator(Operator),
-    Identifier(Box<str>),
+    Identifier {index: usize},
     Keyword(Keyword),
     OpenParenthesis,
     ClosingParenthesis,
@@ -30,21 +33,29 @@ pub enum TokenValue {
     EOF,
 }
 
-impl<'a> Display for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let col = match self.from == self.to {
-            true => self.from.to_string(),
-            false => format!("{}-{}", self.from, self.to),
-        };
-        writeln!(
-            f,
-            "line: {}, col: {}, value: {}",
-            self.line_number, col, self.value
-        )
+impl Token {
+    pub fn new(kind: TokenKind, row: usize, start_col: usize, end_col: usize) -> Self {
+        Self {
+            value: kind,
+            position: FileSpan::new(
+                FilePosition::new(row, start_col),
+                FilePosition::new(row, end_col),
+            ),
+        }
+    }
+
+    pub fn single_char(kind: TokenKind, row: usize, col: usize) -> Self {
+        Self::new(kind, row, col, col)
     }
 }
 
-impl Display for TokenValue {
+impl<'a> Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{}: {}.", self.position, self.value)
+    }
+}
+
+impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

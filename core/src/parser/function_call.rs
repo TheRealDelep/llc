@@ -1,6 +1,6 @@
 use crate::{
     common::{operator::Operator, syntax_error::SyntaxError},
-    lexer::{token::TokenValue, token_stream::TokenStream},
+    lexer::{token::TokenKind, token_stream::TokenStream},
 };
 
 use super::{
@@ -22,7 +22,7 @@ impl FunctionCall {
         file_ast: &mut FileAst,
     ) -> ParsingResult {
         let op_pos = match stream.take_if(|t| match t.value {
-            TokenValue::Operator(Operator::Into) => Some(AstNodePos::from_token(&t)),
+            TokenKind::Operator(Operator::Into) => Some(AstNodePos::from_token(&t)),
             _ => None
         }) {
             Some(pos) => pos,
