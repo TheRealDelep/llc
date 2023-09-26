@@ -12,6 +12,7 @@ use ccg::{
     },
     file::c_file::CFile,
 };
+
 use llc_core::parser::parser::FileAst;
 
 fn main() {
@@ -22,7 +23,7 @@ fn main() {
         None => "src/test.llc"
     };
 
-    let res = FileAst::parse_file(path);
+    let res = FileAst::new(path);
 
     for node in res.nodes {
         print!("{} ", node);

@@ -8,34 +8,34 @@ use crate::{
 
 use super::{
     ast_node::{AstNode, AstNodeKind, ParsingResult},
-    expression::Expression,
+    expression,
     parser::FileAst,
-    statement::Statement, indentifier,
+    statement::Statement, identifier
 };
 
 pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    let identifier = match indentifier::parse(stream, file_ast) {
+    let identifier = match identifier::parse(stream, file_ast) {
         ParsingResult::Ok => file_ast.nodes.len() - 1,
         _ => return ParsingResult::Other,
     };
 
-    if !stream.skip_if(|t| t.value == TokenKind::Operator(Operator::Declassignment)) {
+    if !stream.skip_if(|t| t.kind == TokenKind::Operator(Operator::Declassignment)) {
         return ParsingResult::Other;
     }
 
-    let exp = match Expression::parse(stream, file_ast) {
+    let exp = match expression::parse(stream, file_ast) {
         ParsingResult::Ok => file_ast.nodes.len() - 1,
         ParsingResult::Error => return ParsingResult::Error,
         ParsingResult::Other => {
             let begin = stream.take().position;
             stream.skip_until(
-                |t| t.value == TokenKind::EOI || t.value == TokenKind::EOF,
+                |t| t.kind == TokenKind::EOI || t.kind == TokenKind::EOF,
                 false,
             );
 
             let end = stream.take().position;
             file_ast.errors.push(SyntaxError {
-                position: FileSpan::from_file_spans(&begin, &end),
+                position: FileSpan::combine(&begin, &end),
                 reason: Box::from("Expected a value after operator :="),
             });
 
@@ -44,8 +44,8 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
     };
 
     file_ast.nodes.push(AstNode {
-        kind: AstNodeKind::Statement(Statement::Declaration { start: identifier }),
-        position: FileSpan::from_file_spans(
+        kind: AstNodeKind::Statement(Statement::Declaration { ident_index: identifier }),
+        position: FileSpan::combine(
             &file_ast.nodes[identifier].position,
             &file_ast.nodes[exp].position,
         ),

@@ -9,11 +9,9 @@ use crate::common::{
 
 #[derive(Debug)]
 pub struct Token {
-    pub value: TokenKind,
+    pub kind: TokenKind,
     pub position: FileSpan,
 }
-
-pub trait TokenType {}
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub enum TokenKind {
@@ -22,7 +20,7 @@ pub enum TokenKind {
     Undefined(Box<str>),
     Literal(LiteralValue),
     Operator(Operator),
-    Identifier {index: usize},
+    Identifier { index: usize },
     Keyword(Keyword),
     OpenParenthesis,
     ClosingParenthesis,
@@ -36,7 +34,7 @@ pub enum TokenKind {
 impl Token {
     pub fn new(kind: TokenKind, row: usize, start_col: usize, end_col: usize) -> Self {
         Self {
-            value: kind,
+            kind,
             position: FileSpan::new(
                 FilePosition::new(row, start_col),
                 FilePosition::new(row, end_col),
@@ -51,7 +49,7 @@ impl Token {
 
 impl<'a> Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}: {}.", self.position, self.value)
+        writeln!(f, "{}: {}.", self.position, self.kind)
     }
 }
 
@@ -65,7 +63,7 @@ impl Display for TokenKind {
                 Self::Undefined(t) => format!("Undefined: {t}"),
                 Self::Literal(lit) => format!("Literal value: {lit}"),
                 Self::Operator(op) => format!("Operator: {op}"),
-                Self::Identifier(id) => format!("Identifier: {id}"),
+                Self::Identifier {index}=> format!("Identifier: {index}"),
                 Self::Keyword(k) => format!("Keyword: {k}"),
                 Self::OpenParenthesis => String::from("Opening parenthesis"),
                 Self::ClosingParenthesis => String::from("Closing parenthesis"),

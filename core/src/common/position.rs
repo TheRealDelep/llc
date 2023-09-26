@@ -1,15 +1,15 @@
 use std::fmt::Display;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct FilePosition {
-    row: usize,
-    col: usize
+    pub row: usize,
+    pub col: usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct FileSpan {
-    begin: FilePosition,
-    end: FilePosition
+    pub begin: FilePosition,
+    pub end: FilePosition
 }
 
 impl FilePosition {
@@ -23,7 +23,7 @@ impl FileSpan {
         Self {begin, end}
     }
 
-    pub fn from_file_spans(first: &FileSpan, last: &FileSpan) -> Self {
+    pub fn combine(first: &FileSpan, last: &FileSpan) -> Self {
         Self {
             begin: first.begin,
             end: last.end

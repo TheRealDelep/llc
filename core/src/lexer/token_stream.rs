@@ -23,7 +23,7 @@ impl TokenStream {
             Some(t) => t,
             None => {
                 let eof = match self.tokens.last() {
-                    Some(token) => match token.value {
+                    Some(token) => match token.kind {
                         TokenKind::EOF => token,
                         _ => panic!("Last token should be EOF"),
                     },

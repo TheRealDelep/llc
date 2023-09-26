@@ -5,13 +5,13 @@ use crate::{
 
 use super::{
     ast_node::{AstNode, AstNodeKind, ParsingResult},
-    expression::Expression,
+    expression,
     parser::FileAst,
     statement::Statement,
 };
 
 pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    let begin = match stream.take_if(|t| match t.value {
+    let begin = match stream.take_if(|t| match t.kind {
         TokenKind::Operator(Operator::Return) => Some(t.position),
         _ => None,
     }) {
@@ -19,21 +19,21 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
         None => return ParsingResult::Other,
     };
 
-    let end = match stream.skip_if(|t| t.value == TokenKind::EOI) {
+    let end = match stream.skip_if(|t| t.kind == TokenKind::EOI) {
         true => None,
-        false => match Expression::parse(stream, file_ast) {
+        false => match expression::parse(stream, file_ast) {
             ParsingResult::Ok => Some(stream.peek(-1).position),
             ParsingResult::Error => return ParsingResult::Error,
             ParsingResult::Other => {
                 let begin = stream.take().position;
                 stream.skip_until(
-                    |t| t.value == TokenKind::EOI || t.value == TokenKind::EOF,
+                    |t| t.kind == TokenKind::EOI || t.kind == TokenKind::EOF,
                     false,
                 );
                 let end = stream.take().position;
 
                 let err = SyntaxError {
-                    position: FileSpan::from_file_spans(&begin, &end),
+                    position: FileSpan::combine(&begin, &end),
                     reason: Box::from("Expected ; or a value after return keyword"),
                 };
 
@@ -44,13 +44,13 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
     };
 
     let position = match end {
-        Some(pos) => FileSpan::from_file_spans(&begin, &end),
+        Some(pos) => FileSpan::combine(&begin, &pos),
         None => begin,
     };
 
     file_ast.nodes.push(AstNode {
         position,
-        kind: AstNodeKind::Statement(Statement::Return()),
+        kind: AstNodeKind::Statement(Statement::Return)
     });
 
     ParsingResult::Ok

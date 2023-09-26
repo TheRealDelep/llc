@@ -1,33 +1,38 @@
-use std::{fs, vec, collections::HashMap};
+use std::{collections::HashMap, fs, vec};
 
 use super::{
     file_stream::FileLine,
-    literal_builder::{build_literal, build_identifier},
+    identifier_builder::build_identifier,
+    literal_builder::build_literal,
     operator_builder::build_operator,
     token::{Token, TokenKind},
     token_stream::TokenStream,
 };
-use crate::{common::{syntax_error::SyntaxError, identifier::Identifier}, lexer::file_stream::FileStream};
+use crate::{
+    common::{identifier::Identifier, syntax_error::SyntaxError},
+    lexer::file_stream::FileStream,
+};
 
-pub struct Lexer {
-    file: FileStream,
-    tokens: TokenStream,
-    errors: Vec<SyntaxError>,
-    identifiers: Vec<Identifier>
+pub struct LexedFile {
+    pub file_name: Box<str>,
+    pub stream: TokenStream,
+    pub errors: Vec<SyntaxError>,
+    pub identifiers: Vec<Identifier>,
 }
 
-pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
-    let mut lexer = Lexer {
-        file: get_file_stream(filename),
-        tokens: vec![],
+pub fn get_tokens(file_name: &str) -> LexedFile {
+    let mut file = get_file_stream(file_name);
+    let mut identifiers_index: HashMap<Box<str>, usize> = HashMap::new();
+
+    let mut lexer = LexedFile {
+        file_name: file_name.to_owned().into_boxed_str(),
+        stream: TokenStream::new(vec![]),
         errors: vec![],
-        identifiers: vec![]
+        identifiers: vec![],
     };
 
-    let mut indentifiers_index: HashMap<str, usize> = HashMap::new();
-
-    let mut current_line = match lexer.file.get_next() {
-        None => return (lexer.tokens, lexer.errors),
+    let mut current_line = match file.get_next() {
+        None => return lexer,
         Some(line) => line,
     };
 
@@ -36,13 +41,12 @@ pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
             let line_number = current_line.number + 1;
             let char_number = current_line.current_index + 1;
 
-            current_line = match lexer.file.get_next() {
+            current_line = match file.get_next() {
                 None => {
-                    lexer.tokens.push(Token::single_char(
-                        TokenKind::EOF,
-                        line_number,
-                        char_number,
-                    ));
+                    lexer
+                        .stream
+                        .tokens
+                        .push(Token::single_char(TokenKind::EOF, line_number, char_number));
                     break;
                 }
                 Some(line) => line,
@@ -58,22 +62,24 @@ pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
         }
 
         if let Some(mut ops) = build_operator(current_line) {
-            lexer.tokens.append(&mut ops);
+            lexer.stream.tokens.append(&mut ops);
             continue;
         }
 
         if let Some(token) = build_literal(current_line) {
-            lexer.tokens.push(token);
+            lexer.stream.tokens.push(token);
             continue;
         }
 
-        if let Some(token) = build_identifier(current_line, &mut lexer.identifiers, indentifiers_index) {
-            lexer.tokens.push(token);
+        if let Some(token) =
+            build_identifier(current_line, &mut lexer.identifiers, &mut identifiers_index)
+        {
+            lexer.stream.tokens.push(token);
             continue;
         }
 
         if let Some(token) = build_single_char_token(current_line) {
-            lexer.tokens.push(token);
+            lexer.stream.tokens.push(token);
             continue;
         }
 
@@ -90,8 +96,7 @@ pub fn get_tokens(filename: &str) -> (TokenStream, Vec<SyntaxError>) {
             ))
         }
     }
-
-    (lexer.tokens, lexer.errors)
+    lexer
 }
 
 fn get_file_stream(filename: &str) -> FileStream {
