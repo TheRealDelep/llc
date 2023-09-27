@@ -1,22 +1,28 @@
 use std::fmt::Display;
 
+use crate::type_system::llc_type::Type;
+
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum LiteralValue {
-    String(Box<str>),
-    Char(char),
-    Integer(Box<str>),
-    Float(Box<str>),
+pub struct LiteralValue {
+    pub llc_type: Type,
+    pub value: Box<str>
 }
 
 impl Display for LiteralValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let val = match self {
-            Self::String(str) => format!("String (\"{}\")", str),
-            Self::Char(c) => format!("Char (\"{}\")", c),
-            Self::Integer(i) => format!("Integer (\"{}\")", i),
-            Self::Float(f) => format!("Float (\"{}\")", f),
+        let t = match self.llc_type {
+            Type::Char => "char".to_string(),
+            Type::String => "string".to_string(),
+            Type::Float { signed, size } => format!("{}f{}", match signed {
+                true => "s",
+                false => "u"
+            }, size), 
+            Type::Integer { signed, size } => format!("{}i{}", match signed {
+                true => "s",
+                false => "u"
+            }, size)
         };
 
-        write!(f, "{}", format!("Literal value ({val})"))
+        write!(f, "{}", format!("Literal {} ({})", t, self.value))
     }
 }

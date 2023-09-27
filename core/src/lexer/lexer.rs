@@ -66,7 +66,7 @@ pub fn get_tokens(file_name: &str) -> LexedFile {
             continue;
         }
 
-        if let Some(token) = build_literal(current_line) {
+        if let Some(token) = build_literal(current_line, &mut lexer.errors) {
             lexer.stream.tokens.push(token);
             continue;
         }

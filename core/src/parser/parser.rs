@@ -3,6 +3,7 @@ use std::fmt::Display;
 use super::ast_node;
 use super::ast_node::ParsingResult;
 use super::ast_node::AstNode;
+use crate::common::identifier::Identifier;
 use crate::common::position::FileSpan;
 use crate::common::syntax_error::SyntaxError;
 use crate::lexer::lexer;
@@ -12,7 +13,8 @@ pub struct FileAst {
     pub file_name: Box<str>,
     pub nodes: Vec<AstNode>,
     pub errors: Vec<SyntaxError>,
-    root_nodes: Vec<usize>,
+    pub identifiers: Vec<Identifier>,
+    pub root_nodes: Vec<usize>,
 }
 
 impl FileAst {
@@ -23,6 +25,7 @@ impl FileAst {
             file_name: Box::from(file_name),
             nodes: vec![],
             errors: lexer.errors,
+            identifiers: lexer.identifiers,
             root_nodes: vec![],
         };
 

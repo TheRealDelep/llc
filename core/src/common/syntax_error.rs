@@ -43,17 +43,4 @@ impl SyntaxError {
             },
         }
     }
-
-    pub(crate) fn from_tokens(first: &Token, last: &Token, reason: Option<Box<str>>) -> Self {
-        SyntaxError {
-            position: FileSpan::combine(&first.position, &last.position),
-            reason: match reason {
-                Some(str) => Box::from(format!("SyntaxError: {}", str)),
-                None => Box::from(format!(
-                    "SyntaxError. from {0}, to {1}",
-                    first.kind, last.kind
-                )),
-            },
-        }
-    }
 }
