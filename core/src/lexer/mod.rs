@@ -1,3 +1,4 @@
+pub(crate) mod identifier_builder;
 pub mod token;
 
 pub(crate) mod file_stream;

@@ -1,7 +1,9 @@
 use std::fmt::Display;
 
+use super::ast_node;
 use super::ast_node::ParsingResult;
 use super::ast_node::AstNode;
+use crate::common::identifier::Identifier;
 use crate::common::position::FileSpan;
 use crate::common::syntax_error::SyntaxError;
 use crate::lexer::lexer;
@@ -11,17 +13,19 @@ pub struct FileAst {
     pub file_name: Box<str>,
     pub nodes: Vec<AstNode>,
     pub errors: Vec<SyntaxError>,
-    root_nodes: Vec<usize>,
+    pub identifiers: Vec<Identifier>,
+    pub root_nodes: Vec<usize>,
 }
 
 impl FileAst {
     pub fn new<'a>(file_name: &'a str) -> Self {
-        let (mut stream, errors) = lexer::get_tokens(file_name);
+        let mut lexer = lexer::get_tokens(file_name);
 
         let mut file_ast = FileAst {
             file_name: Box::from(file_name),
             nodes: vec![],
-            errors,
+            errors: lexer.errors,
+            identifiers: lexer.identifiers,
             root_nodes: vec![],
         };
 
@@ -30,30 +34,30 @@ impl FileAst {
         }
 
         'parse: loop {
-            if !stream.can_read() {
+            if !lexer.stream.can_read() {
                 break 'parse;
             }
 
-            match AstNode::parse(&mut stream, &mut file_ast) {
+            match ast_node::parse(&mut lexer.stream, &mut file_ast) {
                 ParsingResult::Ok => {
                     file_ast.root_nodes.push(file_ast.nodes.len() - 1);
                 }
                 ParsingResult::Error => {
-                    stream.skip_until(
-                        |t| t.value == TokenKind::EOI || t.value == TokenKind::EOF,
+                    lexer.stream.skip_until(
+                        |t| t.kind == TokenKind::EOI || t.kind == TokenKind::EOF,
                         false,
                     );
                 }
                 ParsingResult::Other => {
-                    let begin = stream.take().position;
-                    stream.skip_until(
-                        |t| t.value == TokenKind::EOI || t.value == TokenKind::EOF,
+                    let begin = lexer.stream.take().position;
+                    lexer.stream.skip_until(
+                        |t| t.kind == TokenKind::EOI || t.kind == TokenKind::EOF,
                         false,
                     );
 
-                    let end = stream.take().position;
+                    let end = lexer.stream.take().position;
                     file_ast.errors.push(SyntaxError {
-                        position: FileSpan::from_file_spans(&begin, &end),
+                        position: FileSpan::combine(&begin, &end),
                         reason: Box::from("Node cannot be parsed with your shit, morron!"),
                     });
                 }
@@ -69,7 +73,7 @@ impl Display for FileAst {
         let s: Vec<String> = self
             .root_nodes
             .iter()
-            .map(|i| self.nodes[*i])
+            .map(|i| self.nodes[*i].to_string())
             .collect();
 
         write!(f, "{}", s.join("\n"))

@@ -1,84 +1,41 @@
 use crate::{
-    common::{operator::Operator, syntax_error::SyntaxError},
+    common::{operator::Operator, position::FileSpan, syntax_error::SyntaxError},
     lexer::{token::TokenKind, token_stream::TokenStream},
 };
 
 use super::{
-    ast_node::{AstNode, AstNodeData, AstNodePos, ParsingResult},
+    ast_node::{AstNode, AstNodeKind, ParsingResult},
     expression::Expression,
-    indentifier::Identifier,
+    identifier,
     parser::FileAst,
 };
 
-pub struct FunctionCall {
-    pub identifier_id: usize,
-    pub param_id: Option<usize>,
-    pub pos: AstNodePos,
-}
+pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
+    let op_pos = match stream.take_if(|t| match t.kind {
+        TokenKind::Operator(Operator::Into) => Some(t.position),
+        _ => None,
+    }) {
+        Some(pos) => pos,
+        None => return ParsingResult::Other,
+    };
 
-impl FunctionCall {
-    pub(in crate::parser) fn parse(
-        stream: &mut TokenStream,
-        file_ast: &mut FileAst,
-    ) -> ParsingResult {
-        let op_pos = match stream.take_if(|t| match t.value {
-            TokenKind::Operator(Operator::Into) => Some(AstNodePos::from_token(&t)),
-            _ => None
-        }) {
-            Some(pos) => pos,
-            None => return ParsingResult::Other
-        };
+    let identifier_id = match identifier::parse(stream, file_ast) {
+        ParsingResult::Ok => file_ast.nodes.len() - 1,
+        ParsingResult::Error => return ParsingResult::Error,
+        ParsingResult::Other => {
+            let token = stream.peek(0);
+            let reason = Box::from(format!("Expected an expression after operator -> in function call expression but found {}.", token.kind));
+            file_ast
+                .errors
+                .push(SyntaxError::from_token(token, Some(reason)));
+            return ParsingResult::Error;
+        }
+    };
 
-        let param_id = match &file_ast.nodes[file_ast.nodes.len() - 1] {
-            AstNode::Expression(_) => Some(file_ast.nodes.len() - 1),
-            AstNode::Statement(_) => None
-        };
+    file_ast.nodes.push(AstNode {
+        kind: AstNodeKind::Expression(Expression::FunctionCall),
+        position: FileSpan::combine(&op_pos, &file_ast.nodes[identifier_id].position),
+    });
 
-        let identifier_id = match Identifier::parse(stream, file_ast) {
-            ParsingResult::Ok => file_ast.nodes.len() - 1,
-            ParsingResult::Error => return ParsingResult::Error,
-            ParsingResult::Other => {
-                let token = stream.peek(0);
-                let reason = Box::from(format!("Expected an expression after operator -> in function call expression but found {}.", token.value));
-                file_ast
-                    .errors
-                    .push(SyntaxError::from_token(token, Some(reason)));
-                return ParsingResult::Error;
-            }
-        };
-
-        let exp = &file_ast.nodes[identifier_id];
-
-        let pos = match param_id {
-            Some(id) => {
-                let param = &file_ast.nodes[id];
-                AstNodePos::from_nodes(param, exp)
-            },
-            None => AstNodePos::combine(&op_pos, exp.get_pos())
-        };
-
-        let node = AstNode::Expression(Expression::FunctionCall(FunctionCall {
-            identifier_id,
-            param_id,
-            pos,
-        }));
-        file_ast.nodes.push(node);
-        ParsingResult::Ok
-    }
-}
-
-impl AstNodeData for FunctionCall {
-    fn print(&self, file_ast: &FileAst) -> String {
-        let id = file_ast.nodes[self.identifier_id].print(file_ast);
-        let param = match self.param_id {
-            Some(id) => file_ast.nodes[id].print(file_ast),
-            None => "".to_string()
-        };
-
-        format!("Function Call (Identifier: {0}, Params: [{1}])", id, param)
-    }
-
-    fn get_pos(&self) -> &super::ast_node::AstNodePos {
-        &self.pos
-    }
+    ParsingResult::Ok
 }

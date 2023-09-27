@@ -4,23 +4,20 @@ use crate::{
 };
 
 use super::{
-    ast_node::ParsingResult,
-    function::Function,
-    function_call::FunctionCall,
-    literal::Literal,
-    parser::FileAst,
+    ast_node::ParsingResult, function_call, identifier, literal::{Literal, self},
+    parser::FileAst, block,
 };
 
 pub enum Expression {
-    Identifier {id: usize},
+    Identifier {index: usize},
     Literal(Literal),
-    Function(Function),
-    FunctionCall(FunctionCall),
+    Block,
+    FunctionCall,
 }
 
 pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    match stream.peek(0).value {
-        TokenKind::Identifier(_)
+    match stream.peek(0).kind {
+        TokenKind::Identifier { .. }
         | TokenKind::Literal(_)
         | TokenKind::OpenCurly
         | TokenKind::Operator(Operator::Into) => {}
@@ -28,7 +25,7 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
     }
 
     if let ParsingResult::Ok = parse_left_side(stream, file_ast) {
-        match stream.peek(0).value {
+        match stream.peek(0).kind {
             TokenKind::EOI => return ParsingResult::Ok,
             _ => {}
         }
@@ -36,7 +33,7 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
 
     loop {
         if let ParsingResult::Ok = parse_right_side(stream, file_ast) {
-            match stream.peek(0).value {
+            match stream.peek(0).kind {
                 TokenKind::EOI => return ParsingResult::Ok,
                 _ => continue,
             }
@@ -46,7 +43,7 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
         let second = stream.peek(1);
         let reason = format!(
             "Unexpected token encountered while trying to parse expression. Expected one of(;, function call, function body, operator) after {0} but found {1}", 
-            first.value, second.value);
+            first.kind, second.kind);
 
         file_ast.errors.push(SyntaxError::from_token(
             stream.peek(1),
@@ -57,7 +54,7 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
 }
 
 fn parse_right_side(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    if let res @ ParsingResult::Ok = FunctionCall::parse(stream, file_ast) {
+    if let res @ ParsingResult::Ok = function_call::parse(stream, file_ast) {
         return res;
     }
 
@@ -69,7 +66,7 @@ fn parse_left_side(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingR
         return ParsingResult::Ok;
     }
 
-    if let ParsingResult::Ok = Function::parse(stream, file_ast) {
+    if let ParsingResult::Ok = block::parse(stream, file_ast) {
         return ParsingResult::Ok;
     }
 
@@ -77,11 +74,11 @@ fn parse_left_side(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingR
 }
 
 fn parse_single_token_exp(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    if let ParsingResult::Ok = Identifier::parse(stream, file_ast) {
+    if let ParsingResult::Ok = identifier::parse(stream, file_ast) {
         return ParsingResult::Ok;
     }
 
-    if let ParsingResult::Ok = Literal::parse(stream, file_ast) {
+    if let ParsingResult::Ok = literal::parse(stream, file_ast) {
         return ParsingResult::Ok;
     }
 

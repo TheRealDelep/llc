@@ -1,5 +1,5 @@
 use crate::lexer::{
-    token::{Token, TokenKind},
+    token::TokenKind,
     token_stream::TokenStream,
 };
 
@@ -10,16 +10,16 @@ use super::{
 };
 
 pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    let identifier = stream.take_if(|t| match t.value {
-        TokenKind::Identifier(id) => Some(t),
+    let pos_id = stream.take_if(|t| match t.kind {
+        TokenKind::Identifier { index } => Some((t.position, index)),
         _ => None
     });
 
-    match identifier {
-        Some(id) => {
+    match pos_id {
+        Some((pos, id)) => {
             let node = AstNode {
-                position : id.position,
-                kind: AstNodeKind::Expression::Identifier
+                position : pos, 
+                kind: AstNodeKind::Expression(Expression::Identifier {index: id})
             };
             file_ast.nodes.push(node);
             ParsingResult::Ok
