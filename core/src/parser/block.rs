@@ -1,10 +1,12 @@
+use std::default;
+
 use crate::{
     common::{syntax_error::SyntaxError, position::FileSpan},
     lexer::{token::TokenKind, token_stream::TokenStream},
 };
 
 use super::{
-    ast_node::{AstNode, ParsingResult, AstNodeKind},
+    ast_node::{AstNode, ParsingResult, AstNodeKind, NodeParent},
     expression::Expression,
     parser::FileAst,
     statement
@@ -38,7 +40,8 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
 
             let node = AstNode {
                 kind: AstNodeKind::Expression(Expression::Block),
-                position: FileSpan::combine(&begin, &end)
+                position: FileSpan::combine(&begin, &end),
+                parent: NodeParent::Unchecked
             };
 
             file_ast.nodes.push(node);

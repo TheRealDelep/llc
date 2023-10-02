@@ -7,14 +7,21 @@ use crate::{
 };
 
 use super::{
-    ast_node::{AstNode, AstNodeKind, ParsingResult},
+    ast_node::{AstNode, AstNodeKind, ParsingResult, NodeParent},
     expression::{self, Expression},
     parser::FileAst,
     statement::Statement, identifier
 };
 
+pub struct Declaration {
+    id_idx: usize,
+    exp_idx: usize,
+    name: Box<str>,
+    llc_type: TypeState,
+}
+
 pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {
-    let identifier = match identifier::parse(stream, file_ast) {
+    let ident_index = match identifier::parse(stream, file_ast) {
         ParsingResult::Ok => file_ast.nodes.len() - 1,
         _ => return ParsingResult::Other,
     };
@@ -44,16 +51,24 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
     };
 
     if let AstNodeKind::Expression(Expression::Literal(lit)) = &exp_node.kind {
-        file_ast.identifiers[identifier].type_state = TypeState::Ok(lit.value.llc_type.clone());
+        file_ast.identifiers[ident_index].type_state = TypeState::Ok(lit.value.llc_type.clone());
     }
 
     file_ast.nodes.push(AstNode {
-        kind: AstNodeKind::Statement(Statement::Declaration { ident_index: identifier }),
+        kind: AstNodeKind::Statement(Statement::Declaration { ident_index }),
         position: FileSpan::combine(
-            &file_ast.nodes[identifier].position,
+            &file_ast.nodes[ident_index].position,
             &exp_node.position,
         ),
+        parent: NodeParent::Unchecked
     });
+
+    match file_ast.nodes[ident_index].kind {
+        AstNodeKind::Expression(Expression::Identifier { index }) => {
+            file_ast.identifiers[index].declaration_idx = file_ast.nodes.len()
+        },
+        _ => panic!("Expected and identifier")
+    };
 
     return ParsingResult::Ok;
 }

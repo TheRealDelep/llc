@@ -35,11 +35,7 @@ pub fn build_identifier<'a>(
     let index = match identifiers_index.get(identifier.as_str()) {
         Some(index) => *index,
         None => {
-            identifiers.push(Identifier {
-                name: identifier.to_owned().into_boxed_str(),
-                type_state: TypeState::Unchecked,
-            });
-
+            identifiers.push(Identifier::new(&identifier));
             let index = identifiers.len() - 1;
             identifiers_index.insert(identifier.into_boxed_str(), index);
             index

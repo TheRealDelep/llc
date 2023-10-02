@@ -8,6 +8,7 @@ use crate::common::position::FileSpan;
 use crate::common::syntax_error::SyntaxError;
 use crate::lexer::lexer;
 use crate::lexer::token::TokenKind;
+use crate::type_system;
 
 pub struct FileAst {
     pub file_name: Box<str>,
@@ -63,7 +64,6 @@ impl FileAst {
                 }
             };
         }
-
         file_ast
     }
 }

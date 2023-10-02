@@ -4,7 +4,7 @@ use crate::{
 };
 
 use super::{
-    ast_node::{AstNode, AstNodeKind, ParsingResult},
+    ast_node::{AstNode, AstNodeKind, ParsingResult, NodeParent},
     expression,
     parser::FileAst,
     statement::Statement,
@@ -50,7 +50,8 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
 
     file_ast.nodes.push(AstNode {
         position,
-        kind: AstNodeKind::Statement(Statement::Return)
+        kind: AstNodeKind::Statement(Statement::Return),
+        parent: NodeParent::Unchecked
     });
 
     ParsingResult::Ok

@@ -4,7 +4,7 @@ use super::{
     statement::{self, Statement},
 };
 use crate::{common::position::FileSpan, lexer::token_stream::TokenStream};
-use std::fmt::Display;
+use std::{fmt::Display, default};
 
 pub enum ParsingResult {
     Ok,
@@ -14,12 +14,21 @@ pub enum ParsingResult {
 
 pub struct AstNode {
     pub kind: AstNodeKind,
+    pub parent: NodeParent,
     pub position: FileSpan,
 }
 
 pub enum AstNodeKind {
     Expression(Expression),
     Statement(Statement),
+}
+
+#[derive(Default)]
+pub enum NodeParent {
+    #[default]
+    Unchecked,
+    Root,
+    Node {index: usize}
 }
 
 pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst) -> ParsingResult {

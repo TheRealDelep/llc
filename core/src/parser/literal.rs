@@ -7,7 +7,7 @@ use crate::{
 };
 
 use super::{
-    ast_node::{ParsingResult, AstNodeKind, AstNode},
+    ast_node::{ParsingResult, AstNodeKind, AstNode, NodeParent},
     expression::Expression,
     parser::FileAst,
 };
@@ -37,6 +37,7 @@ pub struct Literal {
                 file_ast.nodes.push(AstNode {
                     position: l.pos,
                     kind: AstNodeKind::Expression(Expression::Literal(l)),
+                    parent: NodeParent::Unchecked
                 });
                 return ParsingResult::Ok;
             }

@@ -4,7 +4,7 @@ use crate::lexer::{
 };
 
 use super::{
-    ast_node::{AstNode, ParsingResult, AstNodeKind},
+    ast_node::{AstNode, ParsingResult, AstNodeKind, NodeParent},
     expression::Expression,
     parser::FileAst,
 };
@@ -19,7 +19,8 @@ pub(in crate::parser) fn parse(stream: &mut TokenStream, file_ast: &mut FileAst)
         Some((pos, id)) => {
             let node = AstNode {
                 position : pos, 
-                kind: AstNodeKind::Expression(Expression::Identifier {index: id})
+                kind: AstNodeKind::Expression(Expression::Identifier {index: id}),
+                parent: NodeParent::Unchecked
             };
             file_ast.nodes.push(node);
             ParsingResult::Ok

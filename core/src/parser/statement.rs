@@ -6,7 +6,7 @@ use super::{
 
 pub enum Statement {
     Declaration { ident_index: usize },
-    Expression { exp_id: usize },
+    Expression,
     Return 
 }
 
